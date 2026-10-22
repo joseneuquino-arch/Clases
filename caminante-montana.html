@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<title>El caminante de la montaña</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: una sola columna — encabezado, selector de concepto, lienzo grande, panel de lectura en vivo */
+:root{
+  --bg:#eef3f1; --panel:#ffffff; --ink:#17302b; --muted:#5b726c; --line:#c9d6d2;
+  --sky1:#d9ecf7; --sky2:#f4f9f6; --earth:#c9b48f; --earth-edge:#7a5c35;
+  --up:#1f9d55; --down:#d64545; --pos:#2a7fd4; --neg:#b4562a; --dom:#7a3fc2; --img:#c78a00;
+  --water:rgba(42,127,212,.16); --grid:rgba(23,48,43,.09); --axis:#17302b;
+  --f-disp:"Bricolage Grotesque",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1a18; --panel:#16241f; --ink:#e4efe9; --muted:#93aaa3; --line:#2a3d37;
+  --sky1:#13283a; --sky2:#132019; --earth:#5b4a30; --earth-edge:#c7a670;
+  --up:#3ccf7a; --down:#ff6b6b; --pos:#5aa9ff; --neg:#e88a5a; --dom:#b48cff; --img:#f1b52c;
+  --water:rgba(90,169,255,.16); --grid:rgba(228,239,233,.08); --axis:#e4efe9; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1a18; --panel:#16241f; --ink:#e4efe9; --muted:#93aaa3; --line:#2a3d37;
+  --sky1:#13283a; --sky2:#132019; --earth:#5b4a30; --earth-edge:#c7a670;
+  --up:#3ccf7a; --down:#ff6b6b; --pos:#5aa9ff; --neg:#e88a5a; --dom:#b48cff; --img:#f1b52c;
+  --water:rgba(90,169,255,.16); --grid:rgba(228,239,233,.08); --axis:#e4efe9; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 90px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header h1{font-family:var(--f-disp);font-weight:800;font-size:clamp(1.6rem,4vw,2.4rem);margin:0;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:.3rem 0 0;color:var(--muted);max-width:68ch}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tab{font:700 .95rem var(--f-body);border:2px solid var(--line);background:var(--panel);color:var(--ink);
+  padding:.5rem .9rem;border-radius:999px;cursor:pointer}
+.tab[aria-pressed="true"]{border-color:var(--c);background:var(--c);color:#fff}
+.tab:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--pos);outline-offset:2px}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+canvas{display:block;width:100%;height:auto;touch-action:none}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line)}
+.btn{font:700 1rem var(--f-body);background:var(--ink);color:var(--bg);border:0;border-radius:10px;padding:.55rem 1rem;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.controls label{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.9rem}
+#scrub{flex:1 1 220px;min-width:0;accent-color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1.1fr 1fr;gap:16px}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
+.card h2{font-family:var(--f-disp);font-weight:600;font-size:1.15rem;margin:0 0 .4rem}
+.eyebrow{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.live{font-family:var(--f-mono);font-variant-numeric:tabular-nums;display:flex;gap:18px;flex-wrap:wrap;margin:.3rem 0 .6rem;font-size:1.05rem}
+.live b{color:var(--c)}
+.status{font-weight:700;font-size:1.1rem;color:var(--c);min-height:1.5em}
+.result{font-family:var(--f-mono);font-size:1.05rem;line-height:1.7;overflow-x:auto}
+.result .row{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.result .k{font-family:var(--f-body);font-weight:700;min-width:7.5em}
+.chip{display:inline-block;width:.8em;height:.8em;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.pending{opacity:.55}
+.explica p{margin:.35rem 0;max-width:62ch}
+.explica .key{border-left:4px solid var(--c);padding-left:10px;font-weight:700}
+@media (prefers-reduced-motion:reduce){.tab{transition:none}}
+</style>
+
+<div class="wrap" id="app" style="--c:var(--dom)">
+  <header>
+    <span class="eyebrow">Funciones · Análisis de gráficos</span>
+    <h1>El caminante de la montaña</h1>
+    <p>Un caminante recorre el perfil de una montaña. En el eje <b>x</b> están los kilómetros recorridos y en el eje <b>y</b> la altura (en cientos de metros) respecto del nivel del mar. Elegí qué querés observar y dale ▶.</p>
+  </header>
+
+  <div class="tabs" role="group" aria-label="Concepto a observar">
+    <button class="tab" data-mode="dom" style="--c:var(--dom)" aria-pressed="true">Dominio</button>
+    <button class="tab" data-mode="img" style="--c:var(--img)" aria-pressed="false">Imagen</button>
+    <button class="tab" data-mode="crec" style="--c:var(--up)" aria-pressed="false">Crecimiento y decrecimiento</button>
+    <button class="tab" data-mode="pos" style="--c:var(--pos)" aria-pressed="false">Ceros, positividad y negatividad</button>
+    <button class="tab" data-mode="ext" style="--c:var(--neg)" aria-pressed="false">Máximos y mínimos</button>
+  </div>
+
+  <div class="stage">
+    <canvas id="cv" width="1080" height="600" aria-label="Gráfico de la función con el caminante"></canvas>
+    <div class="controls">
+      <button class="btn" id="play">▶ Caminar</button>
+      <button class="btn ghost" id="reset">↺ Volver al inicio</button>
+      <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Posición del caminante">
+      <label>Velocidad <select id="speed"><option value="0.5">lenta</option><option value="1" selected>normal</option><option value="2">rápida</option></select></label>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <span class="eyebrow">En vivo</span>
+      <div class="live"><span>x = <b id="lx">−6</b></span><span>y = f(x) = <b id="ly">−2</b></span></div>
+      <div class="status" id="status"></div>
+      <div class="result" id="result"></div>
+    </div>
+    <div class="card explica" id="explica"></div>
+  </div>
+</div>
+
+<script>
+(()=>{
+// ---------- Función: Hermite monótono por puntos clave (extremos y ceros enteros) ----------
+const P=[[-6,-2],[-5,0],[-3,4],[-1,0],[1,-3],[3,0],[5,3],[6,0],[7,-2]];
+const X0=-6,X1=7;
+const n=P.length, d=[], m=new Array(n).fill(0);
+for(let i=0;i<n-1;i++) d.push((P[i+1][1]-P[i][1])/(P[i+1][0]-P[i][0]));
+m[0]=d[0]; m[n-1]=d[n-2];
+for(let i=1;i<n-1;i++){ if(d[i-1]*d[i]<=0) m[i]=0; else m[i]=(d[i-1]+d[i])/2; }
+for(let i=0;i<n-1;i++){ if(d[i]===0){m[i]=m[i+1]=0;continue}
+  const a=m[i]/d[i], b=m[i+1]/d[i], s=a*a+b*b; if(s>9){const t=3/Math.sqrt(s); m[i]=t*a*d[i]; m[i+1]=t*b*d[i];} }
+function f(x){
+  let i=0; while(i<n-2 && x>P[i+1][0]) i++;
+  const [xa,ya]=P[i],[xb,yb]=P[i+1], h=xb-xa, t=(x-xa)/h, t2=t*t, t3=t2*t;
+  return (2*t3-3*t2+1)*ya+(t3-2*t2+t)*h*m[i]+(-2*t3+3*t2)*yb+(t3-t2)*h*m[i+1];
+}
+
+// ---------- Intervalos ----------
+const CREC=[{a:-6,b:-3,t:"crece"},{a:-3,b:1,t:"decrece"},{a:1,b:5,t:"crece"},{a:5,b:7,t:"decrece"}];
+const SIGNO=[{a:-6,b:-5,t:"neg"},{a:-5,b:-1,t:"pos"},{a:-1,b:3,t:"neg"},{a:3,b:6,t:"pos"},{a:6,b:7,t:"neg"}];
+const CEROS=[-5,-1,3,6];
+const EXT=[{x:-3,y:4,t:"Máximo absoluto"},{x:1,y:-3,t:"Mínimo absoluto"},{x:5,y:3,t:"Máximo relativo"}];
+
+const fmt=v=>{const r=Math.round(v*10)/10; const s=(Math.abs(r)%1===0?Math.abs(r).toFixed(0):Math.abs(r).toFixed(1)).replace(".",","); return (r<0?"−":"")+s};
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+// ---------- Estado ----------
+let mode="dom", xNow=X0, playing=false, last=0;
+const DUR=16000;
+const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+const $=id=>document.getElementById(id);
+
+const TEXTO={
+ dom:{c:"--dom",h:"Dominio",p:["El <b>dominio</b> es el conjunto de todos los valores de <b>x</b> para los que la función existe.","Mirá la <b>sombra</b> del caminante sobre el eje x: lo que va pintando es el dominio. Empieza en el km −6 y termina en el km 7.","<span class='key'>Para el dominio miramos el eje x: de izquierda a derecha.</span>"]},
+ img:{c:"--img",h:"Imagen",p:["La <b>imagen</b> es el conjunto de todos los valores de <b>y</b> que alcanza la función.","Ahora la sombra va al eje y: se pinta cada altura por la que pasó el caminante. Lo más bajo que estuvo fue −3 y lo más alto, 4.","<span class='key'>Para la imagen miramos el eje y: de abajo hacia arriba.</span>"]},
+ crec:{c:"--up",h:"Crecimiento y decrecimiento",p:["La función <b>crece</b> cuando, al avanzar en x, el caminante <b>sube</b>. <b>Decrece</b> cuando baja.","Fijate que los intervalos se escriben con los valores de <b>x</b> (dónde empieza y dónde termina la subida), no con las alturas.","<span class='key'>Los intervalos de crecimiento se leen en el eje x y se escriben abiertos.</span>"]},
+ pos:{c:"--pos",h:"Ceros, positividad y negatividad",p:["El eje x es el <b>nivel del mar</b>. Los <b>ceros</b> (raíces) son los puntos donde el caminante lo cruza: y = 0.","<b>C⁺</b>: valores de x donde está por encima del mar (y &gt; 0). <b>C⁻</b>: donde está por debajo (y &lt; 0).","<span class='key'>Otra vez respondemos con valores de x, aunque miremos si y es positivo o negativo.</span>"]},
+ ext:{c:"--neg",h:"Máximos y mínimos",p:["Un <b>máximo</b> es un punto donde la función deja de crecer y empieza a decrecer: una cima. Un <b>mínimo</b> es al revés: un valle.","El <b>absoluto</b> es el más alto (o más bajo) de todo el recorrido; el <b>relativo</b> lo es sólo comparado con sus alrededores.","<span class='key'>Se escribe como punto (x ; y): en qué km está y qué altura tiene.</span>"]}
+};
+
+function setMode(md){
+  mode=md;
+  document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mode===md));
+  $("app").style.setProperty("--c",`var(${TEXTO[md].c})`);
+  const T=TEXTO[md]; $("explica").innerHTML=`<span class="eyebrow">Cómo se lee</span><h2>${T.h}</h2>`+T.p.map(p=>`<p>${p}</p>`).join("");
+  update();
+}
+
+// ---------- Panel de resultados ----------
+function intervalo(a,b,openA,openB,partial){
+  return `${openA?"(":"["}${fmt(a)} ; ${fmt(b)}${partial?"…":(openB?")":"]")}`;
+}
+function listaSeg(segs,tipo,openFn){
+  const out=[];
+  for(const s of segs){ if(s.t!==tipo) continue;
+    if(xNow<=s.a) continue;
+    const done=xNow>=s.b-1e-9, b=done?s.b:xNow;
+    const [oa,ob]=openFn(s); out.push(`<span class="${done?"":"pending"}">${intervalo(s.a,b,oa,ob,!done)}</span>`); }
+  return out.length?out.join(" ∪ "):"<span class='pending'>todavía nada</span>";
+}
+function update(){
+  const y=f(xNow);
+  $("lx").textContent=fmt(xNow); $("ly").textContent=fmt(y);
+  $("scrub").value=Math.round((xNow-X0)/(X1-X0)*1000);
+  const fin=xNow>=X1-1e-9;
+  let st="",res="";
+  const slope=f(Math.min(xNow+.01,X1))-f(Math.max(xNow-.01,X0));
+  if(mode==="dom"){
+    st=fin?"Recorrido completo.":(xNow<=X0?"Listo para salir del km −6.":"Avanzando… el dominio se sigue pintando.");
+    res=`<div class="row"><span class="k">Dom f =</span><span>${fin?"[−6 ; 7]":`<span class="pending">[−6 ; ${fmt(xNow)}…</span>`}</span></div>`;
+  }else if(mode==="img"){
+    let lo=Infinity,hi=-Infinity; for(let x=X0;x<=xNow+1e-9;x+=0.01){const v=f(x); if(v<lo)lo=v; if(v>hi)hi=v;}
+    st=fin?"Ya pasó por todas las alturas.":"Se pintan en el eje y las alturas visitadas.";
+    res=`<div class="row"><span class="k">Altura mínima:</span><span>${fmt(lo)}</span></div><div class="row"><span class="k">Altura máxima:</span><span>${fmt(hi)}</span></div><div class="row"><span class="k">Im f =</span><span>${fin?"[−3 ; 4]":`<span class="pending">[${fmt(lo)} ; ${fmt(hi)}]…</span>`}</span></div>`;
+  }else if(mode==="crec"){
+    st=fin?"Recorrido completo.":(Math.abs(slope)<0.002?"Está en una cima o un valle: ni sube ni baja.":(slope>0?"↗ Está subiendo: la función crece.":"↘ Está bajando: la función decrece."));
+    res=`<div class="row"><span class="k"><span class="chip" style="background:var(--up)"></span>Crece en:</span><span>${listaSeg(CREC,"crece",()=>[true,true])}</span></div>
+         <div class="row"><span class="k"><span class="chip" style="background:var(--down)"></span>Decrece en:</span><span>${listaSeg(CREC,"decrece",()=>[true,true])}</span></div>`;
+  }else if(mode==="pos"){
+    const zs=CEROS.filter(z=>z<=xNow+1e-9).map(fmt);
+    st=Math.abs(y)<0.05?"¡Está justo en el nivel del mar! Eso es un cero.":(y>0?"Está sobre el nivel del mar: y > 0.":"Está bajo el nivel del mar: y < 0.");
+    const oc=s=>[s.a!==X0, s.b!==X1];
+    res=`<div class="row"><span class="k">Ceros:</span><span>${zs.length?"x = "+zs.join(" ; x = "):"<span class='pending'>todavía nada</span>"}</span></div>
+         <div class="row"><span class="k"><span class="chip" style="background:var(--pos)"></span>C⁺ =</span><span>${listaSeg(SIGNO,"pos",oc)}</span></div>
+         <div class="row"><span class="k"><span class="chip" style="background:var(--neg)"></span>C⁻ =</span><span>${listaSeg(SIGNO,"neg",oc)}</span></div>`;
+  }else{
+    const vistos=EXT.filter(e=>e.x<=xNow+1e-9);
+    const near=EXT.find(e=>Math.abs(e.x-xNow)<0.15);
+    st=near?`Llegó a un ${near.y>0?"pico":"valle"} en el km ${fmt(near.x)}.`:"Buscando cimas y valles…";
+    res=vistos.length?vistos.map(e=>`<div class="row"><span class="k">${e.t}:</span><span>(${fmt(e.x)} ; ${fmt(e.y)})</span></div>`).join(""):"<span class='pending'>todavía nada</span>";
+    if(fin) res+=`<div class="row"><span class="k">Ojo:</span><span style="font-family:var(--f-body)">en (5 ; 3) hay una cima, pero no es la más alta: es relativo.</span></div>`;
+  }
+  $("status").textContent=st; $("result").innerHTML=res;
+  draw();
+}
+
+// ---------- Dibujo ----------
+let W=1080,H=600,dpr=1;
+const WX0=-7.2,WX1=8.2,WY0=-4.6,WY1=5.6;
+let padL=34,padR=14,padT=14,padB=30;
+const sx=x=>padL+(x-WX0)/(WX1-WX0)*(W-padL-padR);
+const sy=y=>padT+(WY1-y)/(WY1-WY0)*(H-padT-padB);
+function resize(){
+  const r=cv.getBoundingClientRect(); dpr=window.devicePixelRatio||1;
+  W=r.width; H=Math.max(300,Math.min(620,W*0.58));
+  cv.style.height=H+"px"; cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0); draw();
+}
+function band(x1,x2,y,col,w){ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineCap="butt";ctx.beginPath();ctx.moveTo(sx(x1),y);ctx.lineTo(sx(x2),y);ctx.stroke();}
+function vband(y1,y2,x,col,w){ctx.strokeStyle=col;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x,sy(y1));ctx.lineTo(x,sy(y2));ctx.stroke();}
+function dot(x,y,r,fill,stroke){ctx.beginPath();ctx.arc(sx(x),sy(y),r,0,7);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.lineWidth=2.5;ctx.strokeStyle=stroke;ctx.stroke();}}
+
+function draw(){
+  const ink=css("--ink"), muted=css("--muted"), small=W<520;
+  ctx.clearRect(0,0,W,H);
+  // cielo
+  const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,css("--sky1")); g.addColorStop(1,css("--sky2"));
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // mar (modo positividad)
+  if(mode==="pos"){ctx.fillStyle=css("--water");ctx.fillRect(0,sy(0),W,H-sy(0));}
+  // grilla
+  ctx.strokeStyle=css("--grid");ctx.lineWidth=1;
+  for(let x=Math.ceil(WX0);x<=WX1;x++){ctx.beginPath();ctx.moveTo(sx(x),padT);ctx.lineTo(sx(x),H-padB);ctx.stroke();}
+  for(let y=Math.ceil(WY0);y<=WY1;y++){ctx.beginPath();ctx.moveTo(padL,sy(y));ctx.lineTo(W-padR,sy(y));ctx.stroke();}
+  // tierra bajo la curva
+  ctx.beginPath(); ctx.moveTo(sx(X0),H-padB);
+  for(let x=X0;x<=X1+1e-9;x+=0.02) ctx.lineTo(sx(x),sy(f(x)));
+  ctx.lineTo(sx(X1),H-padB); ctx.closePath();
+  ctx.globalAlpha=.45; ctx.fillStyle=css("--earth"); ctx.fill(); ctx.globalAlpha=1;
+  // ejes
+  ctx.strokeStyle=ink;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(padL,sy(0));ctx.lineTo(W-padR,sy(0));ctx.moveTo(sx(0),padT);ctx.lineTo(sx(0),H-padB);ctx.stroke();
+  ctx.fillStyle=ink;ctx.font=`600 ${small?11:13}px "JetBrains Mono",monospace`;ctx.textAlign="center";ctx.textBaseline="top";
+  for(let x=-6;x<=7;x++){ if(x===0)continue; if(small&&x%2)continue; ctx.fillText(fmt(x),sx(x),sy(0)+6);}
+  ctx.textAlign="right";ctx.textBaseline="middle";
+  for(let y=-4;y<=5;y++){ if(y===0)continue; ctx.fillText(fmt(y),sx(0)-6,sy(y));}
+  ctx.textAlign="left";ctx.font=`700 ${small?12:14}px "Atkinson Hyperlegible",sans-serif`;
+  ctx.fillText("x (km)",W-padR-(small?46:56),sy(0)-12); ctx.fillText("y (altura)",sx(0)+8,padT+8);
+  if(mode==="pos"){ctx.fillStyle=css("--pos");ctx.fillText("nivel del mar",sx(-7)+2,sy(0)+(small?24:26));}
+
+  // ----- capas por concepto -----
+  const axY=sy(0), BW=small?7:10;
+  if(mode==="dom" && xNow>X0){ band(X0,xNow,axY,css("--dom"),BW); }
+  if(mode==="img" && xNow>X0){
+    let lo=Infinity,hi=-Infinity; for(let x=X0;x<=xNow+1e-9;x+=0.01){const v=f(x); lo=Math.min(lo,v); hi=Math.max(hi,v);}
+    vband(lo,hi,sx(0),css("--img"),BW);
+  }
+  if(mode==="crec"){ for(const s of CREC){ if(xNow<=s.a)continue; band(s.a,Math.min(xNow,s.b),axY,s.t==="crece"?css("--up"):css("--down"),BW);} }
+  if(mode==="pos"){ for(const s of SIGNO){ if(xNow<=s.a)continue; band(s.a,Math.min(xNow,s.b),axY,s.t==="pos"?css("--pos"):css("--neg"),BW);} }
+
+  // curva: recorrida en color, resto tenue
+  const col=mode==="crec"?null:css(TEXTO[mode].c);
+  ctx.lineWidth=3.2; ctx.lineJoin="round";
+  ctx.strokeStyle=css("--earth-edge"); ctx.globalAlpha=.55; ctx.beginPath();
+  for(let x=X0;x<=X1+1e-9;x+=0.02){const p=[sx(x),sy(f(x))]; x===X0?ctx.moveTo(...p):ctx.lineTo(...p);} ctx.stroke(); ctx.globalAlpha=1;
+  if(xNow>X0){
+    if(mode==="crec"){
+      for(const s of CREC){ if(xNow<=s.a)continue; ctx.strokeStyle=s.t==="crece"?css("--up"):css("--down"); ctx.lineWidth=4.5; ctx.beginPath();
+        for(let x=s.a;x<=Math.min(xNow,s.b)+1e-9;x+=0.02){const p=[sx(x),sy(f(x))]; x===s.a?ctx.moveTo(...p):ctx.lineTo(...p);} ctx.stroke(); }
+    }else{ ctx.strokeStyle=col; ctx.lineWidth=4.5; ctx.beginPath();
+      for(let x=X0;x<=xNow+1e-9;x+=0.02){const p=[sx(x),sy(f(x))]; x===X0?ctx.moveTo(...p):ctx.lineTo(...p);} ctx.stroke(); }
+  }
+  // extremos del dominio (puntos llenos = incluidos)
+  dot(X0,f(X0),5,ink); dot(X1,f(X1),5,ink);
+  // ceros
+  if(mode==="pos") for(const z of CEROS) if(z<=xNow+1e-9){ dot(z,0,7,css("--panel"),css("--pos")); }
+  // extremos
+  if(mode==="ext") for(const e of EXT) if(e.x<=xNow+1e-9){
+    dot(e.x,e.y,7,css("--panel"),css("--neg"));
+    ctx.fillStyle=css("--neg"); ctx.font=`700 ${small?11:13}px "JetBrains Mono",monospace`; ctx.textAlign="center";
+    ctx.textBaseline=e.y>0?"bottom":"top"; ctx.fillText(`(${fmt(e.x)} ; ${fmt(e.y)})`,sx(e.x),sy(e.y)+(e.y>0?-12:12));
+  }
+
+  // proyecciones
+  const y=f(xNow), px=sx(xNow), py=sy(y);
+  ctx.setLineDash([5,5]); ctx.lineWidth=1.6;
+  const showV=mode!=="img", showH=mode==="img"||mode==="ext";
+  if(showV){ctx.strokeStyle=css(TEXTO[mode].c);ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px,axY);ctx.stroke();}
+  if(showH){ctx.strokeStyle=css(mode==="img"?"--img":"--neg");ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(sx(0),py);ctx.stroke();}
+  ctx.setLineDash([]);
+  if(showV){ctx.fillStyle=css(TEXTO[mode].c);ctx.beginPath();ctx.moveTo(px,axY);ctx.lineTo(px-6,axY+(y>=0?-10:10));ctx.lineTo(px+6,axY+(y>=0?-10:10));ctx.closePath();ctx.fill();}
+  if(showH){ctx.fillStyle=css(mode==="img"?"--img":"--neg");ctx.beginPath();ctx.arc(sx(0),py,5,0,7);ctx.fill();}
+
+  // caminante
+  hiker(px,py,Math.atan(-(f(xNow+.05)-f(xNow-.05))/.1*((H-padT-padB)/(WY1-WY0))/((W-padL-padR)/(WX1-WX0))),small?0.8:1);
+}
+function hiker(x,y,ang,s){
+  const ink=css("--ink"), t=performance.now()/180*(playing?1:0), sw=Math.sin(t)*0.5;
+  ctx.save(); ctx.translate(x,y); ctx.scale(s,s);
+  ctx.lineCap="round"; ctx.strokeStyle=ink; ctx.lineWidth=3;
+  const lean=ang*0.35;
+  ctx.rotate(lean);
+  // piernas
+  ctx.beginPath(); ctx.moveTo(0,-14); ctx.lineTo(-6*Math.cos(sw)-2,0); ctx.moveTo(0,-14); ctx.lineTo(6*Math.cos(sw)+2,0); ctx.stroke();
+  // mochila
+  ctx.fillStyle=css("--neg"); ctx.fillRect(-11,-30,7,12);
+  // torso
+  ctx.beginPath(); ctx.moveTo(0,-14); ctx.lineTo(0,-30); ctx.stroke();
+  // bastón
+  ctx.strokeStyle=css("--earth-edge"); ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(9,-24); ctx.lineTo(13,0); ctx.stroke();
+  ctx.strokeStyle=ink; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(0,-26); ctx.lineTo(9,-22); ctx.stroke();
+  // cabeza + gorro
+  ctx.fillStyle=css("--panel"); ctx.beginPath(); ctx.arc(0,-36,5.5,0,7); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=css("--img"); ctx.beginPath(); ctx.arc(0,-38,6,Math.PI,0); ctx.fill();
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(x,y,4,0,7); ctx.fillStyle=ink; ctx.fill();
+}
+
+// ---------- Animación ----------
+function loop(ts){
+  if(!playing) return;
+  const dt=last?ts-last:0; last=ts;
+  xNow+=dt/DUR*(X1-X0)*+$("speed").value;
+  // pausa breve en puntos notables
+  if(xNow>=X1){xNow=X1;playing=false;$("play").textContent="▶ Caminar";}
+  update();
+  if(playing) requestAnimationFrame(loop);
+}
+$("play").onclick=()=>{
+  if(playing){playing=false;$("play").textContent="▶ Caminar";draw();return;}
+  if(xNow>=X1) xNow=X0;
+  playing=true;last=0;$("play").textContent="❚❚ Pausa";requestAnimationFrame(loop);
+};
+$("reset").onclick=()=>{playing=false;xNow=X0;$("play").textContent="▶ Caminar";update();};
+$("scrub").oninput=e=>{playing=false;$("play").textContent="▶ Caminar";xNow=X0+e.target.value/1000*(X1-X0);update();};
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{setMode(b.dataset.mode); if(!playing){xNow=X0;update();}});
+// arrastrar sobre el gráfico
+cv.addEventListener("pointerdown",e=>{const mv=ev=>{const r=cv.getBoundingClientRect();const wx=WX0+(ev.clientX-r.left-padL)/(W-padL-padR)*(WX1-WX0);xNow=Math.max(X0,Math.min(X1,wx));playing=false;$("play").textContent="▶ Caminar";update();};mv(e);cv.setPointerCapture(e.pointerId);cv.onpointermove=mv;cv.onpointerup=()=>{cv.onpointermove=null;};});
+window.addEventListener("resize",resize);
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",draw);
+new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+setMode("dom"); resize();
+document.fonts?.ready.then(draw);
+})();
+</script>
+
+<!-- lápiz láser: toda la página, el trazo se borra a los 5 s -->
+<style>
+#lzInk{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;touch-action:none;z-index:50}
+body.lz-drawing #lzInk{pointer-events:auto;cursor:crosshair}
+#lzPen{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:max(16px,env(safe-area-inset-right,0px));z-index:51;display:flex;align-items:center;gap:6px;
+  font:700 1.05rem "Atkinson Hyperlegible",system-ui,sans-serif;border:2px solid rgba(128,128,128,.4);background:var(--panel,#fff);color:var(--ink,#18213a);border-radius:999px;padding:.65rem 1.1rem;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+#lzPen[aria-pressed="true"]{background:#e5007e;border-color:#e5007e;color:#fff}
+#lzPen:focus-visible{outline:3px solid #e5007e;outline-offset:2px}
+</style>
+<canvas id="lzInk" aria-hidden="true"></canvas>
+<button id="lzPen" aria-pressed="false" aria-label="Lápiz láser" title="Lápiz láser: el trazo se borra solo">
+  <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 20l1.2-4.6L15.6 5a2 2 0 0 1 2.8 0l.6.6a2 2 0 0 1 0 2.8L8.6 18.8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M13.5 7l3.5 3.5" stroke="currentColor" stroke-width="2"/></svg>
+  <span>Lápiz</span>
+</button>
+<script>
+(()=>{
+const ink=document.getElementById("lzInk"), ctx=ink.getContext("2d"), pen=document.getElementById("lzPen");
+document.body.appendChild(ink); document.body.appendChild(pen);
+const HOLD=4000, FADE=1000, COL="#ff1f9a";
+let strokes=[], cur=null, raf=null;
+function size(){ const d=devicePixelRatio||1; ink.width=Math.round(innerWidth*d); ink.height=Math.round(innerHeight*d); ctx.setTransform(d,0,0,d,0,0); }
+addEventListener("resize",size); size();
+pen.onclick=()=>{ const on=pen.getAttribute("aria-pressed")!=="true"; pen.setAttribute("aria-pressed",on); document.body.classList.toggle("lz-drawing",on); };
+const pos=e=>[e.clientX+scrollX,e.clientY+scrollY];
+ink.addEventListener("pointerdown",e=>{ e.preventDefault();
+  const r=pen.getBoundingClientRect(); if(e.clientX>=r.left-8&&e.clientX<=r.right+8&&e.clientY>=r.top-8&&e.clientY<=r.bottom+8){ pen.click(); return; }
+  ink.setPointerCapture(e.pointerId); cur={pts:[pos(e)],end:null}; strokes.push(cur); loop(); });
+ink.addEventListener("pointermove",e=>{ if(!cur) return; for(const c of (e.getCoalescedEvents?e.getCoalescedEvents():[e])) cur.pts.push(pos(c)); });
+const end=()=>{ if(cur){ cur.end=performance.now(); cur=null; } };
+ink.addEventListener("pointerup",end); ink.addEventListener("pointercancel",end);
+function loop(){ if(raf) return; const tick=()=>{
+  const now=performance.now();
+  ctx.clearRect(0,0,ink.width,ink.height); ctx.save(); ctx.translate(-scrollX,-scrollY);
+  strokes=strokes.filter(s=>s.end===null||now-s.end<HOLD+FADE);
+  for(const s of strokes){ const age=s.end===null?0:now-s.end; ctx.globalAlpha=Math.max(0,age<HOLD?1:1-(age-HOLD)/FADE);
+    ctx.lineCap="round"; ctx.lineJoin="round"; ctx.beginPath(); s.pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+    if(s.pts.length===1) ctx.arc(s.pts[0][0],s.pts[0][1],1.5,0,7);
+    ctx.strokeStyle=COL; ctx.shadowColor=COL; ctx.shadowBlur=18; ctx.lineWidth=9; ctx.stroke();
+    ctx.shadowBlur=6; ctx.lineWidth=6; ctx.stroke();
+    ctx.shadowColor="#fff"; ctx.shadowBlur=4; ctx.strokeStyle="#fff"; ctx.lineWidth=2.2; ctx.stroke(); }
+  ctx.restore(); ctx.globalAlpha=1; ctx.shadowBlur=0;
+  raf=strokes.length?requestAnimationFrame(tick):null; }; raf=requestAnimationFrame(tick); }
+})();
+</script>
+
+</body>
+</html>
