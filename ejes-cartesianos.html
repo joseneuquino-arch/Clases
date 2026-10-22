@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<title>Ejes cartesianos y pares ordenados</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: encabezado · pestañas en orden de la clase · pizarra (plano táctil) + panel lateral que explica lo que se toca */
+:root{
+  --bg:#eef1f6; --panel:#ffffff; --ink:#18213a; --muted:#5d6782; --line:#d3d9e6; --grid:#e3e8f1; --grid2:#c9d1e0;
+  --abs:#0f8f7e; --ord:#e0731c; --orig:#7a45d6; --ok:#1e9a57; --bad:#d33a3a;
+  --q1:rgba(15,143,126,.13); --q2:rgba(122,69,214,.12); --q3:rgba(224,115,28,.13); --q4:rgba(42,118,214,.12);
+  --pt:#2a5bd7; --soft:#f5f7fb; --fucsia:#e5007e;
+  --f-disp:"Bricolage Grotesque",system-ui,sans-serif; --f-body:"Atkinson Hyperlegible",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#10141f; --panel:#171d2b; --ink:#e6eaf3; --muted:#9aa4bc; --line:#2b3448; --grid:#222a3b; --grid2:#323c53;
+  --abs:#3fd0b9; --ord:#ff9d4d; --orig:#b08cff; --ok:#46cf84; --bad:#ff6d6d;
+  --q1:rgba(63,208,185,.14); --q2:rgba(176,140,255,.14); --q3:rgba(255,157,77,.14); --q4:rgba(110,165,255,.14);
+  --pt:#7ea6ff; --soft:#1d2435; --fucsia:#ff3aa8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10141f; --panel:#171d2b; --ink:#e6eaf3; --muted:#9aa4bc; --line:#2b3448; --grid:#222a3b; --grid2:#323c53;
+  --abs:#3fd0b9; --ord:#ff9d4d; --orig:#b08cff; --ok:#46cf84; --bad:#ff6d6d;
+  --q1:rgba(63,208,185,.14); --q2:rgba(176,140,255,.14); --q3:rgba(255,157,77,.14); --q4:rgba(110,165,255,.14);
+  --pt:#7ea6ff; --soft:#1d2435; --fucsia:#ff3aa8; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-disp);font-weight:800;font-size:clamp(1.6rem,4vw,2.4rem);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tab{font:700 .95rem var(--f-body);border:2px solid var(--line);background:var(--panel);color:var(--ink);padding:.5rem .9rem;border-radius:999px;cursor:pointer;display:flex;gap:.45rem;align-items:center}
+.tab .n{font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab[aria-pressed="true"] .n{color:var(--bg);opacity:.7}
+button:focus-visible{outline:3px solid var(--orig);outline-offset:2px}
+.main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:820px){.main{grid-template-columns:1fr}}
+.board{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+svg{display:block;width:100%;height:auto;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.drawwrap{position:relative}
+#ink{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;touch-action:none;z-index:50}
+body.drawing #ink{pointer-events:auto;cursor:crosshair}
+.pen{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:max(16px,env(safe-area-inset-right,0px));z-index:51;font-size:1.05rem!important;padding:.65rem 1.1rem!important;display:flex;align-items:center;gap:6px;font:700 .95rem var(--f-body);
+  border:2px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:.45rem .8rem;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.12);z-index:2}
+.pen[aria-pressed="true"]{background:var(--fucsia);border-color:var(--fucsia);color:#fff}
+.bar{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px;border-top:1px solid var(--line);align-items:center}
+.btn{font:700 1rem var(--f-body);border:0;border-radius:10px;padding:.55rem .95rem;cursor:pointer;background:var(--ink);color:var(--bg)}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.btn:disabled{opacity:.4;cursor:default}
+.side{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.side h2{font-family:var(--f-disp);font-weight:600;font-size:1.35rem;margin:0;text-wrap:balance}
+.side p{margin:0;max-width:60ch}
+.muted{color:var(--muted)}
+.info{border-radius:12px;background:var(--soft);padding:12px 14px;display:flex;flex-direction:column;gap:6px;border:2px solid transparent}
+.info.hl{border-color:var(--c,var(--line))}
+.info h3{margin:0;font-family:var(--f-disp);font-weight:600;font-size:1.15rem;color:var(--c,var(--ink))}
+.pair{font-family:var(--f-mono);font-weight:700;font-size:clamp(1.6rem,5vw,2.2rem);letter-spacing:.02em}
+.pair .a{color:var(--abs)} .pair .o{color:var(--ord)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.95rem}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{width:14px;height:14px;border-radius:4px;display:inline-block}
+table{border-collapse:collapse;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:4px 12px;text-align:center}
+th{font-family:var(--f-body)}
+.tbl{overflow-x:auto;max-height:240px;overflow-y:auto}
+.msg{font-weight:700;padding:10px 12px;border-radius:10px;min-height:1.4em}
+.msg.ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.msg.bad{background:color-mix(in srgb,var(--bad) 13%,transparent);color:var(--bad)}
+.msg.neutral{background:var(--soft);color:var(--muted);font-weight:400}
+.stepper{display:flex;align-items:center;justify-content:center;gap:6px;font-family:var(--f-mono);font-weight:700;font-size:1.7rem;flex-wrap:wrap}
+.stepper .val{min-width:2.2ch;text-align:center}
+.sbtn{width:44px;height:44px;border-radius:10px;border:2px solid var(--line);background:var(--panel);color:var(--ink);font:700 1.4rem var(--f-mono);cursor:pointer}
+.grp{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;border-radius:14px}
+.grp .val{font-size:2rem;line-height:1.1}
+.grp.a{background:color-mix(in srgb,var(--abs) 12%,transparent)} .grp.o{background:color-mix(in srgb,var(--ord) 13%,transparent)}
+.grp.a .val{color:var(--abs)} .grp.o .val{color:var(--ord)}
+.prog{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--f-mono);font-weight:700;border:2px solid var(--line);border-radius:999px;padding:2px 10px;background:var(--panel);color:var(--ink);cursor:pointer;font-size:.95rem}
+.chip.done{background:var(--ok);border-color:var(--ok);color:#fff}
+.chip.cur{border-color:var(--pt)}
+.vars{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.vars{grid-template-columns:1fr}}
+.var{border-radius:12px;padding:10px 12px;background:var(--soft)}
+.var b{display:block}
+.var.a{border-left:5px solid var(--abs)} .var.o{border-left:5px solid var(--ord)}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Funciones · Primeros pasos</span>
+    <h1>Ejes cartesianos y pares ordenados</h1>
+  </header>
+  <div class="tabs" id="tabs" role="group" aria-label="Partes de la clase"></div>
+  <div class="main">
+    <div class="board">
+      <div class="drawwrap">
+        <svg id="svg" viewBox="0 0 640 548" aria-label="Plano cartesiano"></svg>
+        <canvas id="ink" aria-hidden="true"></canvas>
+        <button id="pen" class="pen" aria-pressed="false" aria-label="Lápiz puntero" title="Lápiz puntero: el trazo se borra solo">
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 20l1.2-4.6L15.6 5a2 2 0 0 1 2.8 0l.6.6a2 2 0 0 1 0 2.8L8.6 18.8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M13.5 7l3.5 3.5" stroke="currentColor" stroke-width="2"/></svg>
+          <span>Lápiz</span>
+        </button>
+      </div>
+      <div class="bar" id="bar"></div>
+    </div>
+    <aside class="side" id="side"></aside>
+  </div>
+</div>
+
+<script>
+(()=>{
+const NS="http://www.w3.org/2000/svg", svg=document.getElementById("svg"), $=id=>document.getElementById(id);
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const m=v=>(v<0?"−"+Math.abs(v):""+v);
+const W=640,H=548;
+const PLANO={x0:-6.6,x1:6.6,y0:-5.6,y1:5.6,pl:16,pr:16,pt:16,pb:16,xs:1,ys:1};
+const TEMP={x0:-1.2,x1:25.6,y0:-4.6,y1:32,pl:40,pr:16,pt:24,pb:30,xs:3,ys:5,xm:12,xl:"x: hora (h)",yl:"y: temperatura (°C)"};
+const BICI={x0:-0.6,x1:10.8,y0:-3.4,y1:23.5,pl:40,pr:16,pt:24,pb:30,xs:1,ys:2,xm:5,xl:"x: cantidad de bicicletas",yl:"y: cantidad de ruedas"};
+let C=PLANO;
+const sx=x=>C.pl+(x-C.x0)/(C.x1-C.x0)*(W-C.pl-C.pr);
+const sy=y=>C.pt+(C.y1-y)/(C.y1-C.y0)*(H-C.pt-C.pb);
+const ix=px=>C.x0+(px-C.pl)/(W-C.pl-C.pr)*(C.x1-C.x0);
+const iy=py=>C.y1-(py-C.pt)/(H-C.pt-C.pb)*(C.y1-C.y0);
+
+function cuad(x,y){ if(x===0&&y===0) return "el origen"; if(x===0) return "sobre el eje y"; if(y===0) return "sobre el eje x";
+  return "el cuadrante "+(x>0?(y>0?"I":"IV"):(y>0?"II":"III")); }
+
+// ---------------- base del plano ----------------
+function base(opts={}){
+  let s="";
+  const X0=Math.ceil(C.x0),X1=Math.floor(C.x1),Y0=Math.ceil(C.y0),Y1=Math.floor(C.y1);
+  if(opts.quads){ // regiones de cuadrantes
+    const q=[["q1",0,C.x1,0,C.y1,"--q1"],["q2",C.x0,0,0,C.y1,"--q2"],["q3",C.x0,0,C.y0,0,"--q3"],["q4",0,C.x1,C.y0,0,"--q4"]];
+    for(const [id,a,b,c,d,col] of q){ const on=opts.sel===id||opts.allq;
+      s+=`<rect data-hit="${id}" x="${sx(a)}" y="${sy(d)}" width="${sx(b)-sx(a)}" height="${sy(c)-sy(d)}" fill="${on?css(col):"transparent"}" style="cursor:pointer"/>`; }
+  }
+  // grilla
+  for(let x=X0;x<=X1;x++){ if(C!==PLANO&&(x<0||x%C.xs)) continue; s+=`<line x1="${sx(x)}" y1="${sy(C.y0)}" x2="${sx(x)}" y2="${sy(C.y1)}" stroke="${css("--grid")}" stroke-width="1"/>`; }
+  for(let y=Y0;y<=Y1;y++){ if(C!==PLANO&&(y<0||y%C.ys)) continue; s+=`<line x1="${sx(C.x0)}" y1="${sy(y)}" x2="${sx(C.x1)}" y2="${sy(y)}" stroke="${css("--grid")}" stroke-width="1"/>`; }
+  // ejes
+  const ax=opts.sel==="x", ay=opts.sel==="y";
+  const ink=css("--ink");
+  s+=`<line x1="${sx(C.x0)}" y1="${sy(0)}" x2="${sx(C.x1)-4}" y2="${sy(0)}" stroke="${ax?css("--abs"):ink}" stroke-width="${ax?5:2}"/>`;
+  s+=`<polygon points="${sx(C.x1)},${sy(0)} ${sx(C.x1)-12},${sy(0)-6} ${sx(C.x1)-12},${sy(0)+6}" fill="${ax?css("--abs"):ink}"/>`;
+  s+=`<line x1="${sx(0)}" y1="${sy(C.y0)}" x2="${sx(0)}" y2="${sy(C.y1)+4}" stroke="${ay?css("--ord"):ink}" stroke-width="${ay?5:2}"/>`;
+  s+=`<polygon points="${sx(0)},${sy(C.y1)} ${sx(0)-6},${sy(C.y1)+12} ${sx(0)+6},${sy(C.y1)+12}" fill="${ay?css("--ord"):ink}"/>`;
+  // marcas y números
+  const fs=15, mono='font-family="JetBrains Mono, monospace"';
+  for(let x=X0;x<=X1;x++){ if(x===0) continue; if(C!==PLANO&&(x<0||x%C.xs)) continue;
+    s+=`<line x1="${sx(x)}" y1="${sy(0)-4}" x2="${sx(x)}" y2="${sy(0)+4}" stroke="${ink}" stroke-width="1.5"/>`;
+    s+=`<text x="${sx(x)}" y="${sy(0)+20}" text-anchor="middle" font-size="${fs}" ${mono} fill="${css("--muted")}">${m(x)}</text>`; }
+  for(let y=Y0;y<=Y1;y++){ if(y===0) continue; if(C!==PLANO&&(y<0||y%C.ys)) continue;
+    s+=`<line x1="${sx(0)-4}" y1="${sy(y)}" x2="${sx(0)+4}" y2="${sy(y)}" stroke="${ink}" stroke-width="1.5"/>`;
+    s+=`<text x="${sx(0)-9}" y="${sy(y)+5}" text-anchor="end" font-size="${fs}" ${mono} fill="${css("--muted")}">${m(y)}</text>`; }
+  s+=`<text x="${sx(0)-8}" y="${sy(0)+20}" text-anchor="end" font-size="${fs}" ${mono} fill="${css("--muted")}">0</text>`;
+  const bf='font-family="Atkinson Hyperlegible, sans-serif" font-weight="700"';
+  if(C===PLANO){
+    s+=`<text x="${sx(C.x1)-6}" y="${sy(0)-12}" text-anchor="end" font-size="20" ${bf} fill="${css("--abs")}">x</text>`;
+    s+=`<text x="${sx(0)+12}" y="${sy(C.y1)+16}" font-size="20" ${bf} fill="${css("--ord")}">y</text>`;
+  }else{
+    s+=`<text x="${sx(C.xm)}" y="${sy(0)+42}" text-anchor="middle" font-size="15" ${bf} fill="${css("--abs")}">${C.xl}</text>`;
+    s+=`<text x="${sx(0)+10}" y="${sy(C.y1)+14}" font-size="15" ${bf} fill="${css("--ord")}">${C.yl}</text>`;
+  }
+  if(opts.quads){
+    const lab=[["I",3.3,3.3,"q1"],["II",-3.3,3.3,"q2"],["III",-3.3,-3.3,"q3"],["IV",3.3,-3.3,"q4"]];
+    for(const [t,x,y,id] of lab){ const on=opts.sel===id||opts.allq;
+      s+=`<text x="${sx(x)}" y="${sy(y)+12}" text-anchor="middle" font-size="${on?40:30}" font-family="Bricolage Grotesque, sans-serif" font-weight="800" fill="${on?ink:css("--grid2")}" pointer-events="none">${t}</text>`;
+      if(on&&opts.signs){ const sg={q1:"(+ ; +)",q2:"(− ; +)",q3:"(− ; −)",q4:"(+ ; −)"}[id];
+        s+=`<text x="${sx(x)}" y="${sy(y)+40}" text-anchor="middle" font-size="18" ${mono} fill="${css("--muted")}" pointer-events="none">${sg}</text>`; } }
+    // zonas tocables de los ejes y el origen (encima de los cuadrantes)
+    s+=`<line data-hit="x" x1="${sx(C.x0)}" y1="${sy(0)}" x2="${sx(C.x1)}" y2="${sy(0)}" stroke="transparent" stroke-width="30" style="cursor:pointer"/>`;
+    s+=`<line data-hit="y" x1="${sx(0)}" y1="${sy(C.y0)}" x2="${sx(0)}" y2="${sy(C.y1)}" stroke="transparent" stroke-width="30" style="cursor:pointer"/>`;
+    const so=opts.sel==="o";
+    s+=`<circle data-hit="o" cx="${sx(0)}" cy="${sy(0)}" r="${so?11:7}" fill="${so?css("--orig"):ink}" stroke="${css("--panel")}" stroke-width="2.5" style="cursor:pointer"/>`;
+    s+=`<circle data-hit="o" cx="${sx(0)}" cy="${sy(0)}" r="24" fill="transparent" style="cursor:pointer"/>`;
+    if(so) s+=`<text x="${sx(0)+14}" y="${sy(0)+26}" font-size="20" ${bf} fill="${css("--orig")}" pointer-events="none">O</text>`;
+    if(ax) s+=`<text x="${sx(4.4)}" y="${sy(0)-12}" text-anchor="middle" font-size="16" ${bf} fill="${css("--abs")}" pointer-events="none">eje de las abscisas</text>`;
+    if(ay) s+=`<text x="${sx(0)-12}" y="${sy(4.6)}" text-anchor="end" font-size="16" ${bf} fill="${css("--ord")}" pointer-events="none">eje de las ordenadas</text>`;
+  }
+  return s;
+}
+function point(x,y,label,col,r=8,extra=""){
+  let s=`<circle cx="${sx(x)}" cy="${sy(y)}" r="${r}" fill="${col}" stroke="${css("--panel")}" stroke-width="2.5" ${extra}/>`;
+  if(label) s+=`<text x="${sx(x)+10}" y="${sy(y)-10}" font-size="18" font-family="Atkinson Hyperlegible, sans-serif" font-weight="700" fill="${col}" pointer-events="none">${label}</text>`;
+  return s;
+}
+// recorrido animado desde el origen: primero la abscisa, después la ordenada
+function walk(x,y,p,showLab=true){
+  const tot=Math.abs(x)+Math.abs(y); if(!tot) return "";
+  const fx=Math.abs(x)/tot, px=Math.min(1,p/(fx||1e-9)), py=fx>=1?0:Math.max(0,(p-fx)/(1-fx));
+  const cx=x*(fx?px:1), cy=y*py;
+  let s="";
+  if(x){ s+=`<line x1="${sx(0)}" y1="${sy(0)}" x2="${sx(cx)}" y2="${sy(0)}" stroke="${css("--abs")}" stroke-width="3.5" stroke-dasharray="9 7"/>`; }
+  if(y&&py>0){ s+=`<line x1="${sx(x)}" y1="${sy(0)}" x2="${sx(x)}" y2="${sy(cy)}" stroke="${css("--ord")}" stroke-width="3.5" stroke-dasharray="9 7"/>`; }
+  const bf='font-family="JetBrains Mono, monospace" font-weight="700"';
+  if(showLab&&x&&px>=1) s+=`<text x="${sx(x/2)}" y="${sy(0)-14}" text-anchor="middle" font-size="17" ${bf} fill="${css("--abs")}">x = ${m(x)}</text>`;
+  if(showLab&&y&&p>=1) s+=`<text x="${sx(x)+(x>=0?10:-10)}" y="${sy(y/2)+5}" text-anchor="${x>=0?"start":"end"}" font-size="17" ${bf} fill="${css("--ord")}">y = ${m(y)}</text>`;
+  if(p<1) s+=`<circle cx="${sx(cx)}" cy="${sy(y&&py>0?cy:0)}" r="9" fill="${css("--ink")}"/>`;
+  return s;
+}
+let anim=null;
+function animate(x,y,onDone){
+  if(anim) cancelAnimationFrame(anim.id);
+  const dur=reduce?0:Math.max(600,(Math.abs(x)+Math.abs(y))*260);
+  const t0=performance.now();
+  const step=t=>{ const p=dur?Math.min(1,(t-t0)/dur):1; S.walkP=p; draw(); if(p<1) anim={id:requestAnimationFrame(step)}; else {anim=null; onDone&&onDone();} };
+  S.walk=[x,y]; anim={id:requestAnimationFrame(step)};
+}
+
+// ---------------- estado y pestañas ----------------
+const TABS=[
+ {id:"ejes",t:"Los ejes"},{id:"par",t:"Par ordenado"},{id:"leer",t:"Leer puntos"},{id:"ubicar",t:"Ubicar puntos"},{id:"vars",t:"Variables"}];
+const S={tab:"ejes",walk:null,walkP:1};
+const EJES={sel:null,reto:null,retoI:0,msg:null,allq:false};
+const RETO=[["y","el eje de las ordenadas"],["o","el origen"],["q3","el cuadrante III"],["x","el eje de las abscisas"],["q2","el cuadrante II"],["q4","el cuadrante IV"],["q1","el cuadrante I"]];
+const NOMBRE={x:"el eje de las abscisas (eje x)",y:"el eje de las ordenadas (eje y)",o:"el origen",q1:"el cuadrante I",q2:"el cuadrante II",q3:"el cuadrante III",q4:"el cuadrante IV"};
+const PAR={pts:[],last:null};
+const ACT1=[["A",2,1],["B",-2,3],["C",-3,-2],["D",1,-1],["E",0,-3],["F",0,2],["G",3,0],["H",-4,0],["M",0,0]];
+const LEER={cur:0,ux:0,uy:0,done:new Set(),msg:null};
+const ACT2=[["P",3,4],["Q",-2,5],["R",-4,-1],["S",2,-3],["T",0,4],["U",-5,0],["V",1,1],["W",-3,-3]];
+const UBI={cur:0,done:[],ghost:null,msg:null,showQ:false};
+const EXS={temp:{cfg:TEMP,X:[0,3,6,9,12,15,18,21,24],Y:[8,6,5,12,22,27,24,15,10]},
+           bici:{cfg:BICI,X:[0,1,2,3,4,5,6,7,8,9,10],Y:[0,2,4,6,8,10,12,14,16,18,20]}};
+const VARS={ex:"temp",n:0,joined:false,sel:null,nojoin:false};
+let HORAS=EXS.temp.X, TEMPS=EXS.temp.Y;
+function setEx(k){ VARS.ex=k; VARS.n=0; VARS.joined=false; VARS.sel=null; VARS.nojoin=false; HORAS=EXS[k].X; TEMPS=EXS[k].Y; C=EXS[k].cfg; }
+
+TABS.forEach((t,i)=>{const b=document.createElement("button");b.className="tab";b.innerHTML=`<span class="n">${i+1}</span>${t.t}`;b.dataset.id=t.id;b.onclick=()=>go(t.id);$("tabs").appendChild(b);});
+function go(id){ if(anim){cancelAnimationFrame(anim.id);anim=null;} S.tab=id; S.walk=null; S.walkP=1; C=id==="vars"?EXS[VARS.ex].cfg:PLANO;
+  [...$("tabs").children].forEach(b=>b.setAttribute("aria-pressed",b.dataset.id===id)); draw(); side(); bar(); }
+
+// ---------------- dibujo por pestaña ----------------
+function draw(){
+  let s="";
+  if(S.tab==="ejes"){ s=base({quads:true,sel:EJES.sel,signs:true,allq:EJES.allq}); }
+  else if(S.tab==="par"){
+    s=base();
+    s+=`<rect data-hit="grid" x="0" y="0" width="${W}" height="${H}" fill="transparent" style="cursor:crosshair"/>`;
+    PAR.pts.forEach((p,i)=>{ if(PAR.last===i) return; s+=point(p[0],p[1],"",css("--pt"),6,'pointer-events="none"'); });
+    if(S.walk) s+=walk(S.walk[0],S.walk[1],S.walkP);
+    if(PAR.last!==null){ const [x,y]=PAR.pts[PAR.last]; if(S.walkP>=1) s+=point(x,y,`(${m(x)} ; ${m(y)})`,css("--pt"),8,'pointer-events="none"'); }
+  }
+  else if(S.tab==="leer"){
+    s=base();
+    if(S.walk) s+=walk(S.walk[0],S.walk[1],S.walkP);
+    ACT1.forEach(([L,x,y],i)=>{ const d=LEER.done.has(i), c=i===LEER.cur;
+      if(c) s+=`<circle cx="${sx(x)}" cy="${sy(y)}" r="17" fill="none" stroke="${css("--pt")}" stroke-width="3" stroke-dasharray="4 4"/>`;
+      s+=point(x,y,L,d?css("--ok"):css("--pt"),c?9:7,`data-hit="p${i}" style="cursor:pointer"`);
+      s+=`<circle data-hit="p${i}" cx="${sx(x)}" cy="${sy(y)}" r="22" fill="transparent" style="cursor:pointer"/>`; });
+  }
+  else if(S.tab==="ubicar"){
+    s=base();
+    s+=`<rect data-hit="grid" x="0" y="0" width="${W}" height="${H}" fill="transparent" style="cursor:crosshair"/>`;
+    if(S.walk) s+=walk(S.walk[0],S.walk[1],S.walkP);
+    UBI.done.forEach(i=>{ const [L,x,y]=ACT2[i]; s+=point(x,y,L,css("--ok"),7,'pointer-events="none"'); });
+    if(UBI.ghost){ const [gx,gy]=UBI.ghost; s+=`<g pointer-events="none"><circle cx="${sx(gx)}" cy="${sy(gy)}" r="9" fill="none" stroke="${css("--bad")}" stroke-width="3"/><line x1="${sx(gx)-6}" y1="${sy(gy)-6}" x2="${sx(gx)+6}" y2="${sy(gy)+6}" stroke="${css("--bad")}" stroke-width="3"/><line x1="${sx(gx)+6}" y1="${sy(gy)-6}" x2="${sx(gx)-6}" y2="${sy(gy)+6}" stroke="${css("--bad")}" stroke-width="3"/><text x="${sx(gx)+12}" y="${sy(gy)+22}" font-size="16" font-family="JetBrains Mono, monospace" font-weight="700" fill="${css("--bad")}">(${m(gx)} ; ${m(gy)})</text></g>`; }
+  }
+  else if(S.tab==="vars"){
+    s=base();
+    if(VARS.joined&&VARS.n>1){ s+=`<polyline points="${HORAS.slice(0,VARS.n).map((h,i)=>sx(h)+","+sy(TEMPS[i])).join(" ")}" fill="none" stroke="${css("--pt")}" stroke-width="3.5" stroke-linejoin="round"/>`; }
+    if(VARS.sel!==null){ const h=HORAS[VARS.sel],t=TEMPS[VARS.sel];
+      s+=`<line x1="${sx(h)}" y1="${sy(t)}" x2="${sx(h)}" y2="${sy(0)}" stroke="${css("--abs")}" stroke-width="3" stroke-dasharray="6 5"/>`;
+      s+=`<line x1="${sx(h)}" y1="${sy(t)}" x2="${sx(0)}" y2="${sy(t)}" stroke="${css("--ord")}" stroke-width="3" stroke-dasharray="6 5"/>`;
+      s+=`<text x="${sx(h)}" y="${sy(0)-8}" text-anchor="middle" font-size="16" font-family="JetBrains Mono, monospace" font-weight="700" fill="${css("--abs")}">${VARS.ex==="temp"?h+" h":h}</text>`;
+      s+=`<text x="${sx(0)+8}" y="${sy(t)-8}" font-size="16" font-family="JetBrains Mono, monospace" font-weight="700" fill="${css("--ord")}">${VARS.ex==="temp"?t+" °C":t}</text>`; }
+    if(VARS.nojoin){ const bf='font-family="JetBrains Mono, monospace" font-weight="700"';
+      s+=`<line x1="${sx(2)}" y1="${sy(4)}" x2="${sx(3)}" y2="${sy(6)}" stroke="${css("--bad")}" stroke-width="3" stroke-dasharray="5 6"/>`;
+      const qx=sx(2.5),qy=sy(5); s+=`<circle cx="${qx}" cy="${qy}" r="11" fill="none" stroke="${css("--bad")}" stroke-width="3"/><line x1="${qx-7}" y1="${qy-7}" x2="${qx+7}" y2="${qy+7}" stroke="${css("--bad")}" stroke-width="3"/><line x1="${qx+7}" y1="${qy-7}" x2="${qx-7}" y2="${qy+7}" stroke="${css("--bad")}" stroke-width="3"/>`;
+      s+=`<text x="${qx+16}" y="${qy+26}" text-anchor="start" font-size="15" ${bf} fill="${css("--bad")}">¿2,5 bicicletas?</text>`; }
+    for(let i=0;i<VARS.n;i++){ s+=point(HORAS[i],TEMPS[i],"",VARS.sel===i?css("--ink"):css("--pt"),VARS.sel===i?9:7,`data-hit="v${i}" style="cursor:pointer"`);
+      s+=`<circle data-hit="v${i}" cx="${sx(HORAS[i])}" cy="${sy(TEMPS[i])}" r="20" fill="transparent" style="cursor:pointer"/>`; }
+  }
+  svg.innerHTML=s;
+}
+
+// ---------------- panel lateral ----------------
+const INFO={
+ x:{c:"--abs",h:"Eje x · eje de las abscisas",p:"Es la recta numérica <b>horizontal</b>. A la derecha del origen los números son positivos y a la izquierda, negativos."},
+ y:{c:"--ord",h:"Eje y · eje de las ordenadas",p:"Es la recta numérica <b>vertical</b>. Arriba del origen los números son positivos y abajo, negativos."},
+ o:{c:"--orig",h:"Origen · O",p:"Es el punto donde se cortan los dos ejes. Le corresponde el número 0 en cada recta, así que sus coordenadas son <b>(0 ; 0)</b>."},
+ q1:{c:"--abs",h:"Cuadrante I",p:"Arriba a la derecha. Abscisa positiva y ordenada positiva: <b>(+ ; +)</b>."},
+ q2:{c:"--orig",h:"Cuadrante II",p:"Arriba a la izquierda. Abscisa negativa y ordenada positiva: <b>(− ; +)</b>."},
+ q3:{c:"--ord",h:"Cuadrante III",p:"Abajo a la izquierda. Abscisa negativa y ordenada negativa: <b>(− ; −)</b>."},
+ q4:{c:"--pt",h:"Cuadrante IV",p:"Abajo a la derecha. Abscisa positiva y ordenada negativa: <b>(+ ; −)</b>."}
+};
+function msgHTML(o){ return o?`<div class="msg ${o[0]}">${o[1]}</div>`:""; }
+function side(){
+  let h="";
+  if(S.tab==="ejes"){
+    h=`<span class="eyebrow">1 · Los ejes</span><h2>Sistema de ejes cartesianos</h2>
+      <p>Se forma con <b>dos rectas numéricas perpendiculares</b> que se cortan en el 0 de cada una. Los ejes dividen al plano en <b>cuatro cuadrantes</b>, numerados en sentido contrario a las agujas del reloj.</p>`;
+    if(EJES.reto){ const [,txt]=RETO[EJES.retoI]||[];
+      h+= EJES.retoI<RETO.length ? `<div class="info hl" style="--c:var(--orig)"><h3>Desafío ${EJES.retoI+1} de ${RETO.length}</h3><p style="font-size:1.25rem">Tocá <b>${txt}</b>.</p></div>`
+        : `<div class="info hl" style="--c:var(--ok)"><h3>¡Desafío completo!</h3><p>Encontraste todas las partes del plano.</p></div>`;
+      h+=msgHTML(EJES.msg);
+    } else if(EJES.sel){ const I=INFO[EJES.sel]; h+=`<div class="info hl" style="--c:var(${I.c})"><h3>${I.h}</h3><p>${I.p}</p></div>`; }
+    else h+=`<div class="info"><p class="muted">Tocá un eje, el origen o cualquier cuadrante para ver cómo se llama.</p></div>`;
+  }
+  else if(S.tab==="par"){
+    h=`<span class="eyebrow">2 · Par ordenado</span><h2>Cada punto tiene su dirección</h2>
+      <p>Un punto se representa con un <b>par ordenado (x ; y)</b>. Primero va la <b class="pa" style="color:var(--abs)">abscisa</b>: cuánto me muevo a la derecha o a la izquierda. Después la <b style="color:var(--ord)">ordenada</b>: cuánto subo o bajo.</p>`;
+    if(PAR.last!==null){ const [x,y]=PAR.pts[PAR.last];
+      h+=`<div class="info"><div class="pair">( <span class="a">${m(x)}</span> ; <span class="o">${m(y)}</span> )</div>
+        <div class="legend"><span><i class="sw" style="background:var(--abs)"></i>abscisa = ${m(x)}</span><span><i class="sw" style="background:var(--ord)"></i>ordenada = ${m(y)}</span></div>
+        <p>Está en <b>${cuad(x,y)}</b>.</p>${x===0&&y!==0?`<p class="muted">Está sobre el eje y, por eso su abscisa es 0.</p>`:""}${y===0&&x!==0?`<p class="muted">Está sobre el eje x, por eso su ordenada es 0.</p>`:""}</div>`;
+    } else h+=`<div class="info"><p class="muted">Tocá cualquier cruce de la cuadrícula. El punto va a salir del origen, caminar por el eje x y después subir o bajar.</p></div>`;
+    if(PAR.pts.length){ h+=`<div><span class="eyebrow">También en una tabla</span><div class="tbl"><table><thead><tr><th style="color:var(--abs)">x</th><th style="color:var(--ord)">y</th></tr></thead><tbody>${PAR.pts.map(p=>`<tr><td>${m(p[0])}</td><td>${m(p[1])}</td></tr>`).join("")}</tbody></table></div></div>`; }
+    { const P=PAR.last!==null?PAR.pts[PAR.last]:null;
+      h+=`<div class="info"><h3>Otros nombres: preimagen e imagen</h3>
+        <div class="tbl"><table><thead><tr><th></th><th>Nombre en el plano</th><th>Nombre en una relación</th></tr></thead><tbody>
+        <tr><th style="color:var(--abs)">x</th><td style="font-family:var(--f-body)">abscisa</td><td style="font-family:var(--f-body)"><b style="color:var(--abs)">preimagen</b></td></tr>
+        <tr><th style="color:var(--ord)">y</th><td style="font-family:var(--f-body)">ordenada</td><td style="font-family:var(--f-body)"><b style="color:var(--ord)">imagen</b></td></tr></tbody></table></div>
+        <p>Cuando el par ordenado sale de una relación entre variables (como en el paso 5), la <b>x</b> es la <b style="color:var(--abs)">preimagen</b> y la <b>y</b> es su <b style="color:var(--ord)">imagen</b>: el valor que le corresponde a esa x.</p>
+        ${P?`<p style="font-size:1.05rem">En <b>(${m(P[0])} ; ${m(P[1])})</b>: <b style="color:var(--ord)">${m(P[1])}</b> es la imagen de <b style="color:var(--abs)">${m(P[0])}</b>, y <b style="color:var(--abs)">${m(P[0])}</b> es la preimagen de <b style="color:var(--ord)">${m(P[1])}</b>.</p>`:""}</div>`; }
+    h+=`<div class="info"><h3>Observación</h3><p>Todos los puntos <b>sobre el eje y</b> tienen abscisa 0. Todos los puntos <b>sobre el eje x</b> tienen ordenada 0.</p></div>`;
+  }
+  else if(S.tab==="leer"){
+    const [L]=ACT1[LEER.cur], done=LEER.done.has(LEER.cur);
+    h=`<span class="eyebrow">3 · Actividad 1</span><h2>Escribí el par ordenado de cada punto</h2>
+      <div class="prog">${ACT1.map(([l],i)=>`<button class="chip ${LEER.done.has(i)?"done":""} ${i===LEER.cur?"cur":""}" data-p="${i}">${l}</button>`).join("")}</div>
+      <div class="info"><h3>Punto ${L}</h3>
+      <div class="stepper"><span>${L} = (</span>
+        <span class="grp a"><button class="sbtn" data-s="x+" aria-label="Aumentar abscisa">+</button><span class="val">${m(LEER.ux)}</span><button class="sbtn" data-s="x-" aria-label="Disminuir abscisa">−</button></span><span>;</span>
+        <span class="grp o"><button class="sbtn" data-s="y+" aria-label="Aumentar ordenada">+</button><span class="val">${m(LEER.uy)}</span><button class="sbtn" data-s="y-" aria-label="Disminuir ordenada">−</button></span><span>)</span></div>
+      <button class="btn" id="chk" ${done?"disabled":""}>Comprobar</button></div>
+      ${msgHTML(LEER.msg)}
+      <p class="muted">${LEER.done.size} de ${ACT1.length} puntos resueltos. Tocá un punto del plano o una letra para elegirlo.</p>`;
+  }
+  else if(S.tab==="ubicar"){
+    const fin=UBI.cur>=ACT2.length;
+    h=`<span class="eyebrow">4 · Actividad 2</span><h2>Ubicá cada punto en el plano</h2>`;
+    if(!fin){ const [L,x,y]=ACT2[UBI.cur];
+      h+=`<div class="info"><h3>Punto ${UBI.cur+1} de ${ACT2.length}</h3><div class="pair">${L} = ( <span class="a">${m(x)}</span> ; <span class="o">${m(y)}</span> )</div><p class="muted">Tocá en el plano dónde va.</p></div>`;
+    } else h+=`<div class="info hl" style="--c:var(--ok)"><h3>¡Ubicaste los ${ACT2.length} puntos!</h3><p>Ahora decí en qué cuadrante está cada uno, o tocá <b>Mostrar cuadrantes</b>.</p></div>`;
+    h+=msgHTML(UBI.msg);
+    if(UBI.done.length) h+=`<div class="tbl"><table><thead><tr><th>Punto</th><th>Par</th><th>Ubicación</th></tr></thead><tbody>${UBI.done.map(i=>{const [L,x,y]=ACT2[i];return `<tr><td>${L}</td><td>(${m(x)} ; ${m(y)})</td><td style="font-family:var(--f-body)">${UBI.showQ?cuad(x,y).replace("el cuadrante ","Cuad. "):"?"}</td></tr>`}).join("")}</tbody></table></div>`;
+  }
+  else if(S.tab==="vars"&&VARS.ex==="temp"){
+    h=`<span class="eyebrow">5 · Variables · Ejemplo 1</span><h2>Temperatura de un día en Neuquén</h2>
+      <p>Si unimos los puntos del plano formamos una <b>gráfica</b>. La gráfica muestra la relación entre dos magnitudes, llamadas <b>variables</b>.</p>
+      <div class="vars"><div class="var a"><b style="color:var(--abs)">Variable independiente → eje x</b><span class="muted">(preimágenes)</span> La hora. Es la que elegimos nosotros: a qué hora medimos.</div>
+      <div class="var o"><b style="color:var(--ord)">Variable dependiente → eje y</b><span class="muted">(imágenes)</span> La temperatura. Depende de la hora en que se midió.</div></div>
+      <div class="tbl"><table><thead><tr><th style="color:var(--abs)">Hora (h)</th>${HORAS.map((h,i)=>`<td>${i<VARS.n?h:"·"}</td>`).join("")}</tr></thead><tbody><tr><th style="color:var(--ord)">Temp. (°C)</th>${TEMPS.map((t,i)=>`<td>${i<VARS.n?t:"·"}</td>`).join("")}</tr></tbody></table></div>`;
+    if(VARS.sel!==null) h+=`<div class="info hl" style="--c:var(--pt)"><p style="font-size:1.1rem">A las <b style="color:var(--abs)">${HORAS[VARS.sel]} h</b> hacía <b style="color:var(--ord)">${TEMPS[VARS.sel]} °C</b>. El par ordenado es <b class="pair" style="font-size:1.1rem">(${HORAS[VARS.sel]} ; ${TEMPS[VARS.sel]})</b>.</p><p><b style="color:var(--ord)">${TEMPS[VARS.sel]}</b> es la <b style="color:var(--ord)">imagen</b> de <b style="color:var(--abs)">${HORAS[VARS.sel]}</b>: es la temperatura que le corresponde a esa hora. Y <b style="color:var(--abs)">${HORAS[VARS.sel]}</b> es la <b style="color:var(--abs)">preimagen</b> de <b style="color:var(--ord)">${TEMPS[VARS.sel]}</b>.</p></div>`;
+    else h+=`<p class="muted">Registrá las mediciones una por una. Después tocá un punto para leerlo.</p>`;
+    if(VARS.joined) h+=`<div class="info hl" style="--c:var(--ok)"><h3>Variables continuas: se pueden unir</h3><p>Entre las 12 h y las 15 h el tiempo pasa sin saltos (12:30, 13:15, 14:40…) y la temperatura también toma todos los valores intermedios. Por eso tiene sentido unir los puntos.</p></div>`;
+    h+=`<div class="info"><h3>Otro ejemplo</h3><p>Plantas por hectárea y producción de manzanas. La cantidad de plantas es la <b>independiente</b> (x): la podemos elegir. La producción es la <b>dependiente</b> (y): depende de cuántas plantas hay.</p></div>`;
+  }
+  else if(S.tab==="vars"){
+    h=`<span class="eyebrow">5 · Variables · Ejemplo 2</span><h2>Bicicletas y ruedas</h2>
+      <p>En la bicicletería se cuentan las ruedas según cuántas bicicletas hay. Cada bicicleta tiene 2 ruedas.</p>
+      <div class="vars"><div class="var a"><b style="color:var(--abs)">Variable independiente → eje x</b>La cantidad de bicicletas.</div>
+      <div class="var o"><b style="color:var(--ord)">Variable dependiente → eje y</b>La cantidad de ruedas. Depende de cuántas bicicletas hay.</div></div>
+      <div class="tbl"><table><thead><tr><th style="color:var(--abs)">Bicicletas</th>${HORAS.map((h,i)=>`<td>${i<VARS.n?h:"·"}</td>`).join("")}</tr></thead><tbody><tr><th style="color:var(--ord)">Ruedas</th>${TEMPS.map((t,i)=>`<td>${i<VARS.n?t:"·"}</td>`).join("")}</tr></tbody></table></div>`;
+    if(VARS.nojoin) h+=`<div class="info hl" style="--c:var(--bad)"><h3>Estos puntos no se unen</h3><p>Si los uniéramos, la línea pasaría por puntos como <b>(2,5 ; 5)</b>: dos bicicletas y media con cinco ruedas. Eso no existe. Entre 2 y 3 bicicletas no hay ninguna cantidad posible.</p><p>Cuando una variable sólo puede tomar valores <b>separados</b> (contar: 0, 1, 2, 3…), se llama <b>discreta</b>. Su gráfica son <b>puntos sueltos</b>.</p></div>`;
+    else if(VARS.sel!==null) h+=`<div class="info hl" style="--c:var(--pt)"><p style="font-size:1.1rem">Con <b style="color:var(--abs)">${HORAS[VARS.sel]} bicicleta${HORAS[VARS.sel]===1?"":"s"}</b> hay <b style="color:var(--ord)">${TEMPS[VARS.sel]} ruedas</b>. El par ordenado es <b class="pair" style="font-size:1.1rem">(${HORAS[VARS.sel]} ; ${TEMPS[VARS.sel]})</b>.</p><p><b style="color:var(--ord)">${TEMPS[VARS.sel]}</b> es la <b style="color:var(--ord)">imagen</b> de <b style="color:var(--abs)">${HORAS[VARS.sel]}</b>, y <b style="color:var(--abs)">${HORAS[VARS.sel]}</b> es la <b style="color:var(--abs)">preimagen</b> de <b style="color:var(--ord)">${TEMPS[VARS.sel]}</b>.</p></div>`;
+    else h+=`<p class="muted">Registrá los datos uno por uno. Después probá si se pueden unir.</p>`;
+    h+=`<div class="info"><h3>Continua o discreta</h3><p><b>Continua:</b> puede tomar cualquier valor entre dos datos (tiempo, temperatura, altura). Los puntos se unen.</p><p><b>Discreta:</b> sólo toma valores que se cuentan (personas, bicicletas, goles). Los puntos quedan sueltos.</p></div>`;
+  }
+  $("side").innerHTML=h;
+}
+
+// ---------------- botones de abajo ----------------
+function bar(){
+  let h="";
+  if(S.tab==="ejes") h=`<button class="btn" id="b-reto">${EJES.reto?"Terminar desafío":"Desafío: encontrá las partes"}</button><button class="btn ghost" id="b-allq">${EJES.allq?"Ocultar":"Mostrar"} los cuatro cuadrantes</button>`;
+  if(S.tab==="par") h=`<button class="btn ghost" id="b-clr">Borrar puntos</button><span class="muted" style="font-size:.9rem">Tocá un cruce de la cuadrícula.</span>`;
+  if(S.tab==="leer") h=`<button class="btn ghost" id="b-reset">Empezar de nuevo</button>`;
+  if(S.tab==="ubicar") h=`<button class="btn" id="b-q">${UBI.showQ?"Ocultar":"Mostrar"} cuadrantes</button><button class="btn ghost" id="b-reset">Empezar de nuevo</button>`;
+  if(S.tab==="vars") h=`<span class="tabs" role="group" aria-label="Ejemplo"><button class="tab" id="b-ex-temp" aria-pressed="${VARS.ex==="temp"}">Temperatura · continua</button><button class="tab" id="b-ex-bici" aria-pressed="${VARS.ex==="bici"}">Bicicletas · discreta</button></span><button class="btn" id="b-next" ${VARS.n>=HORAS.length?"disabled":""}>Registrar ${VARS.ex==="temp"?"medición":"dato"} (${VARS.n}/${HORAS.length})</button><button class="btn ghost" id="b-join" ${VARS.n<(VARS.ex==="temp"?2:4)?"disabled":""}>${VARS.ex==="temp"?(VARS.joined?"Separar":"Unir")+" los puntos":"¿Se pueden unir?"}</button><button class="btn ghost" id="b-reset">Empezar de nuevo</button>`;
+  $("bar").innerHTML=h;
+}
+$("bar").addEventListener("click",e=>{
+  const id=(e.target.closest("button")||{}).id;
+  if(id==="b-reto"){ EJES.reto=!EJES.reto; EJES.retoI=0; EJES.msg=null; EJES.sel=null; }
+  if(id==="b-allq"){ EJES.allq=!EJES.allq; }
+  if(id==="b-clr"){ PAR.pts=[]; PAR.last=null; S.walk=null; }
+  if(id==="b-reset"&&S.tab==="leer"){ LEER.cur=0;LEER.ux=0;LEER.uy=0;LEER.done.clear();LEER.msg=null;S.walk=null; }
+  if(id==="b-reset"&&S.tab==="ubicar"){ UBI.cur=0;UBI.done=[];UBI.ghost=null;UBI.msg=null;UBI.showQ=false;S.walk=null; }
+  if(id==="b-q"){ UBI.showQ=!UBI.showQ; }
+  if(id==="b-next"&&VARS.n<HORAS.length){ VARS.n++; VARS.sel=VARS.n-1; VARS.nojoin=false; }
+  if(id==="b-join"){ if(VARS.ex==="temp") VARS.joined=!VARS.joined; else { VARS.nojoin=!VARS.nojoin; VARS.sel=null; } }
+  if(id==="b-ex-temp") setEx("temp"); if(id==="b-ex-bici") setEx("bici");
+  if(id==="b-reset"&&S.tab==="vars"){ setEx(VARS.ex); }
+  draw(); side(); bar();
+});
+
+// ---------------- panel: steppers y chips ----------------
+$("side").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.p!==undefined){ selLeer(+b.dataset.p); return; }
+  if(b.dataset.s){ const k=b.dataset.s; if(k==="x-")LEER.ux=Math.max(-6,LEER.ux-1); if(k==="x+")LEER.ux=Math.min(6,LEER.ux+1);
+    if(k==="y-")LEER.uy=Math.max(-5,LEER.uy-1); if(k==="y+")LEER.uy=Math.min(5,LEER.uy+1); LEER.msg=null; side(); return; }
+  if(b.id==="chk"){ checkLeer(); }
+});
+function selLeer(i){ LEER.cur=i; LEER.ux=0; LEER.uy=0; LEER.msg=null; S.walk=null;
+  if(LEER.done.has(i)){ const [,x,y]=ACT1[i]; LEER.ux=x; LEER.uy=y; LEER.msg=["ok",`${ACT1[i][0]} = (${m(x)} ; ${m(y)}) ✓`]; }
+  draw(); side(); }
+function diagnose(ux,uy,x,y){
+  if(ux===y&&uy===x&&x!==y) return "Invertiste el orden. Primero va la abscisa (x) y después la ordenada (y).";
+  if(ux===x) return "La abscisa está bien. Revisá la ordenada: ¿cuánto sube o baja desde el eje x?";
+  if(uy===y) return "La ordenada está bien. Revisá la abscisa: ¿cuánto se corre a la derecha o a la izquierda?";
+  if(ux===-x&&uy===-y) return "Los números están bien, pero los signos no. Fijate de qué lado del origen está.";
+  return "Revisá los dos valores. Arrancá en el origen: primero contá sobre el eje x y después subí o bajá.";
+}
+function checkLeer(){
+  const [L,x,y]=ACT1[LEER.cur];
+  if(LEER.ux===x&&LEER.uy===y){
+    LEER.done.add(LEER.cur); LEER.msg=["ok",`¡Bien! ${L} = (${m(x)} ; ${m(y)}). Está en ${cuad(x,y)}.`]; side();
+    animate(x,y,()=>{ setTimeout(()=>{ if(S.tab!=="leer") return; const nx=ACT1.findIndex((_,i)=>!LEER.done.has(i)); if(nx>=0){ selLeer(nx);} else { LEER.msg=["ok","¡Resolviste los 9 puntos!"]; side(); } },1100); });
+  } else { LEER.msg=["bad",diagnose(LEER.ux,LEER.uy,x,y)]; side(); }
+}
+
+// ---------------- toques en el plano ----------------
+function toSvg(e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse());}
+svg.addEventListener("pointerdown",e=>{
+  const hitEl=e.target.closest("[data-hit]"), hit=hitEl&&hitEl.dataset.hit;
+  if(S.tab==="ejes"){
+    if(!hit) return;
+    if(EJES.reto){ if(EJES.retoI>=RETO.length) return;
+      const [want]=RETO[EJES.retoI];
+      if(hit===want){ EJES.sel=hit; EJES.msg=["ok","¡Correcto! Es "+NOMBRE[hit]+"."]; EJES.retoI++; }
+      else { EJES.sel=hit; EJES.msg=["bad","Eso es "+NOMBRE[hit]+". Probá de nuevo."]; }
+    } else EJES.sel=EJES.sel===hit?null:hit;
+    draw(); side(); return;
+  }
+  if(S.tab==="par"||S.tab==="ubicar"){
+    const p=toSvg(e); const x=Math.round(ix(p.x)), y=Math.round(iy(p.y));
+    if(x<-6||x>6||y<-5||y>5) return;
+    if(S.tab==="par"){
+      let i=PAR.pts.findIndex(q=>q[0]===x&&q[1]===y); if(i<0){PAR.pts.push([x,y]); i=PAR.pts.length-1;}
+      PAR.last=i; side(); animate(x,y,()=>side()); return;
+    }
+    if(UBI.cur>=ACT2.length) return;
+    const [L,tx,ty]=ACT2[UBI.cur];
+    if(x===tx&&y===ty){ UBI.ghost=null; UBI.msg=["ok",`¡Bien! ${L} = (${m(tx)} ; ${m(ty)}) está en ${cuad(tx,ty)}.`];
+      const idx=UBI.cur; side(); animate(tx,ty,()=>{ UBI.done.push(idx); UBI.cur++; S.walk=null; draw(); side(); });
+    } else { UBI.ghost=[x,y]; UBI.msg=["bad",`Tocaste (${m(x)} ; ${m(y)}). `+diagnose(x,y,tx,ty)]; draw(); side(); }
+    return;
+  }
+  if(S.tab==="leer"&&hit&&hit[0]==="p"){ selLeer(+hit.slice(1)); return; }
+  if(S.tab==="vars"&&hit&&hit[0]==="v"){ const i=+hit.slice(1); VARS.sel=VARS.sel===i?null:i; VARS.nojoin=false; draw(); side(); }
+});
+
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()=>draw());
+new MutationObserver(()=>draw()).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+go("ejes");
+
+// ---------------- lápiz puntero (se desvanece) ----------------
+const ink=$("ink"), ictx=ink.getContext("2d"), penBtn=$("pen");
+// lienzo y botón van directo al body: el botón queda siempre encima del lienzo
+document.body.appendChild(ink); document.body.appendChild(penBtn);
+const wrap=document.body;
+const HOLD=4000, FADE=1000; // visible 4 s, se apaga en el último segundo
+let strokes=[], cur=null, raf=null;
+function sizeInk(){ const d=window.devicePixelRatio||1; ink.width=Math.round(innerWidth*d); ink.height=Math.round(innerHeight*d); ictx.setTransform(d,0,0,d,0,0); }
+addEventListener("resize",sizeInk); sizeInk();
+penBtn.onclick=()=>{ const on=penBtn.getAttribute("aria-pressed")!=="true"; penBtn.setAttribute("aria-pressed",on); wrap.classList.toggle("drawing",on); };
+function pos(e){ return [e.clientX+scrollX,e.clientY+scrollY]; } // coordenadas de la página: el trazo acompaña el scroll
+ink.addEventListener("pointerdown",e=>{ e.preventDefault();
+  const r=penBtn.getBoundingClientRect(); if(e.clientX>=r.left-8&&e.clientX<=r.right+8&&e.clientY>=r.top-8&&e.clientY<=r.bottom+8){ penBtn.click(); return; } ink.setPointerCapture(e.pointerId); cur={pts:[pos(e)],end:null}; strokes.push(cur); loop(); });
+ink.addEventListener("pointermove",e=>{ if(!cur) return; const ev=e.getCoalescedEvents?e.getCoalescedEvents():[e]; for(const c of ev) cur.pts.push(pos(c)); });
+const endStroke=()=>{ if(cur){ cur.end=performance.now(); cur=null; } };
+ink.addEventListener("pointerup",endStroke); ink.addEventListener("pointercancel",endStroke);
+function loop(){ if(raf) return; const tick=()=>{
+  const now=performance.now(), col=css("--fucsia");
+  ictx.clearRect(0,0,ink.width,ink.height);
+  ictx.save(); ictx.translate(-scrollX,-scrollY);
+  strokes=strokes.filter(s=>s.end===null||now-s.end<HOLD+FADE);
+  for(const s of strokes){
+    const age=s.end===null?0:now-s.end, a=age<HOLD?1:1-(age-HOLD)/FADE;
+    ictx.globalAlpha=Math.max(0,a); ictx.strokeStyle=col; ictx.lineCap="round"; ictx.lineJoin="round";
+    ictx.beginPath(); s.pts.forEach(([x,y],i)=>i?ictx.lineTo(x,y):ictx.moveTo(x,y));
+    if(s.pts.length===1){ ictx.arc(s.pts[0][0],s.pts[0][1],1.5,0,7); }
+    // halo fucsia ancho y difuso
+    ictx.shadowColor=col; ictx.shadowBlur=18; ictx.lineWidth=9; ictx.stroke();
+    // cuerpo fucsia
+    ictx.shadowBlur=6; ictx.lineWidth=6; ictx.stroke();
+    // núcleo blanco: efecto láser
+    ictx.shadowColor="#ffffff"; ictx.shadowBlur=4; ictx.strokeStyle="#ffffff"; ictx.lineWidth=2.2; ictx.stroke();
+  }
+  ictx.restore(); ictx.globalAlpha=1; ictx.shadowBlur=0;
+  if(strokes.length) raf=requestAnimationFrame(tick); else raf=null;
+}; raf=requestAnimationFrame(tick); }
+})();
+</script>
+
+</body>
+</html>
