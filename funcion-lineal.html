@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<title>Función lineal en movimiento</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: encabezado · 8 pasos en pestañas · cada paso = columna de trabajo + plano cartesiano · lápiz láser fijo */
+:root{
+  --bg:#eef1f6; --panel:#ffffff; --ink:#18213a; --muted:#5d6782; --line:#d3d9e6; --grid:#e3e8f1; --grid2:#c9d1e0; --soft:#f5f7fb;
+  --abs:#0f8f7e; --ord:#e0731c; --ca:#2a5bd7; --cb:#c2357a; --root:#7a45d6; --ok:#1e9a57; --bad:#d33a3a; --rect:#2a5bd7; --rect2:#e0731c;
+  --mach:#2b3a67; --mach2:#3e5191; --screen:#0d1630; --glow:#7dffcf; --fucsia:#e5007e;
+  --f-disp:"Bricolage Grotesque",system-ui,sans-serif; --f-body:"Atkinson Hyperlegible",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#10141f; --panel:#171d2b; --ink:#e6eaf3; --muted:#9aa4bc; --line:#2b3448; --grid:#222a3b; --grid2:#323c53; --soft:#1d2435;
+  --abs:#3fd0b9; --ord:#ff9d4d; --ca:#7ea6ff; --cb:#ff6fb5; --root:#b08cff; --ok:#46cf84; --bad:#ff6d6d; --rect:#7ea6ff; --rect2:#ff9d4d;
+  --mach:#3a4c85; --mach2:#5167b0; --screen:#070c1b; --glow:#7dffcf; --fucsia:#ff3aa8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10141f; --panel:#171d2b; --ink:#e6eaf3; --muted:#9aa4bc; --line:#2b3448; --grid:#222a3b; --grid2:#323c53; --soft:#1d2435;
+  --abs:#3fd0b9; --ord:#ff9d4d; --ca:#7ea6ff; --cb:#ff6fb5; --root:#b08cff; --ok:#46cf84; --bad:#ff6d6d; --rect:#7ea6ff; --rect2:#ff9d4d;
+  --mach:#3a4c85; --mach2:#5167b0; --screen:#070c1b; --glow:#7dffcf; --fucsia:#ff3aa8; color-scheme:dark}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 90px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-disp);font-weight:800;font-size:clamp(1.6rem,4vw,2.4rem);margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font-family:var(--f-disp);font-weight:600;font-size:1.35rem;margin:0;text-wrap:balance}
+h3{font-family:var(--f-disp);font-weight:600;font-size:1.1rem;margin:0}
+p{margin:0;max-width:62ch}
+.muted{color:var(--muted)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tab{font:700 .95rem var(--f-body);border:2px solid var(--line);background:var(--panel);color:var(--ink);padding:.5rem .85rem;border-radius:999px;cursor:pointer;display:flex;gap:.45rem;align-items:center}
+.tab .n{font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab[aria-pressed="true"] .n{color:var(--bg);opacity:.7}
+button:focus-visible,input:focus-visible{outline:3px solid var(--root);outline-offset:2px}
+.sec{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:14px;align-items:start}
+@media (max-width:860px){.sec{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card.flush{padding:0;overflow:hidden}
+.card.flush .pad{padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+svg{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{font:700 1rem var(--f-body);border:0;border-radius:10px;padding:.55rem .95rem;cursor:pointer;background:var(--ink);color:var(--bg)}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.btn:disabled{opacity:.4;cursor:default}
+.chip{font:700 1.15rem var(--f-mono);min-width:3rem;height:3rem;border-radius:12px;border:2px solid var(--line);background:var(--panel);color:var(--abs);cursor:pointer}
+.chip.used{background:color-mix(in srgb,var(--abs) 14%,transparent);border-color:var(--abs)}
+.chip:disabled{opacity:.45;cursor:default}
+.sel{font:700 .95rem var(--f-mono);border:2px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:.35rem .8rem;cursor:pointer}
+.sel[aria-pressed="true"]{border-color:var(--ca);background:color-mix(in srgb,var(--ca) 14%,transparent)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px;border-top:1px solid var(--line);align-items:center}
+.formula{font-family:var(--f-mono);font-weight:700;font-size:clamp(1.6rem,5vw,2.4rem);letter-spacing:.01em}
+.ca{color:var(--ca)} .cb{color:var(--cb)} .cx{color:var(--abs)} .cy{color:var(--ord)} .cr{color:var(--root)}
+.box{border-radius:12px;background:var(--soft);padding:12px 14px;display:flex;flex-direction:column;gap:6px;border:2px solid transparent}
+.box.hl{border-color:var(--c,var(--line))}
+.box h3{color:var(--c,var(--ink))}
+.big{font-family:var(--f-mono);font-weight:700;font-size:1.4rem}
+table{border-collapse:collapse;font-family:var(--f-mono);font-variant-numeric:tabular-nums;width:100%}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:center;white-space:nowrap}
+th{font-family:var(--f-body)}
+.tbl{overflow-x:auto}
+#mqTbl,#tbTbl{width:auto;font-size:1.1rem}
+#mqTbl th,#tbTbl th{font-family:var(--f-mono);font-size:1.15rem;padding:8px 16px}
+#mqTbl td,#tbTbl td{padding:7px 16px}
+td.calc{text-align:left}
+th.out,td.out{border:none;text-align:left;padding-left:12px;font-size:1rem}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;line-height:1.05;margin:0 .1em}
+.fr>span:last-child{border-top:2px solid currentColor}
+.msg{font-weight:700;padding:10px 12px;border-radius:10px}
+.msg.ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.msg.bad{background:color-mix(in srgb,var(--bad) 13%,transparent);color:var(--bad)}
+.stepper{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.grp{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;border-radius:14px;background:color-mix(in srgb,var(--abs) 12%,transparent)}
+.grp .val{font:700 2rem var(--f-mono);color:var(--abs);min-width:2.2ch;text-align:center;line-height:1.1}
+.sbtn{width:44px;height:40px;border-radius:10px;border:2px solid var(--line);background:var(--panel);color:var(--ink);font:700 1.3rem var(--f-mono);cursor:pointer}
+.slider{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+.slider input{width:100%;min-width:0}
+.slider .lab{font:700 1.2rem var(--f-mono)}
+.slider .v{font:700 1.2rem var(--f-mono);min-width:3.2ch;text-align:right}
+#sa,#pa{accent-color:var(--ca)} #sb,#pb1,#pb2{accent-color:var(--cb)}
+.pill{display:inline-block;font-weight:700;padding:.15rem .6rem;border-radius:999px;color:#fff}
+.steps{display:flex;flex-direction:column;gap:6px}
+.step{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--soft)}
+@media (max-width:520px){.step{grid-template-columns:1fr}}
+.step .e{font:700 1.25rem var(--f-mono);overflow-x:auto}
+.step .nt{color:var(--muted);font-size:.95rem}
+.step.new{outline:2px solid var(--ca)}
+.concl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.concl{grid-template-columns:1fr}}
+.concl div{border-radius:12px;padding:10px;background:var(--soft);border:2px solid transparent;opacity:.6}
+.concl div.on{opacity:1;border-color:var(--c)}
+.concl b{display:block;color:var(--c)}
+/* lápiz láser */
+#ink{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;touch-action:none;z-index:50}
+body.drawing #ink{pointer-events:auto;cursor:crosshair}
+.pen{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:max(16px,env(safe-area-inset-right,0px));z-index:51;display:flex;align-items:center;gap:6px;
+  font:700 1.05rem var(--f-body);border:2px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:.65rem 1.1rem;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.pen[aria-pressed="true"]{background:var(--fucsia);border-color:var(--fucsia);color:#fff}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Funciones · Función lineal</span>
+    <h1>Función lineal en movimiento</h1>
+  </header>
+  <div class="tabs" id="tabs" role="group" aria-label="Pasos de la clase"></div>
+
+  <!-- 1 · MÁQUINA -->
+  <section class="sec" data-tab="maq">
+    <div class="col">
+      <div class="card">
+        <span class="eyebrow">1 · Una fórmula que relaciona números</span>
+        <h2>La máquina de transformar números</h2>
+        <p>La máquina tiene una regla: <b>“el doble del número, más 1”</b>. En fórmula: <b class="formula" style="font-size:1.2rem">y = 2x + 1</b>. Elegí un número para que entre.</p>
+        <svg id="mq" viewBox="0 0 420 360" aria-label="Máquina de la fórmula y = 2x + 1"></svg>
+        <div class="row" id="mqChips" role="group" aria-label="Número que entra"></div>
+        <div id="mqMsg"></div>
+      </div>
+      <div class="sec" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+        <div class="card"><h3>Diagrama de flechas</h3><svg id="mqVenn" viewBox="0 0 300 340" aria-label="Diagrama de flechas"></svg></div>
+        <div class="card"><h3>Tabla</h3><div class="tbl"><table id="mqTbl"></table></div></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card flush">
+        <svg id="mqG" aria-label="Gráfico de los puntos"></svg>
+        <div class="bar"><button class="btn" id="mqJoin" disabled>Unir los puntos</button><button class="btn ghost" id="mqReset">Empezar de nuevo</button></div>
+      </div>
+      <div class="card" id="mqSide"></div>
+    </div>
+  </section>
+
+  <!-- 2 · FUNCIÓN LINEAL -->
+  <section class="sec" data-tab="fl" hidden>
+    <div class="col">
+      <div class="card">
+        <span class="eyebrow">2 · La función lineal</span>
+        <h2>Su fórmula es y = ax + b</h2>
+        <p>Cuando la fórmula tiene esta forma, la función se llama <b>lineal</b> y su gráfica es una <b>recta</b>. Tocá cada parte de la fórmula.</p>
+        <div class="formula" style="text-align:center;padding:10px 0">y = <button class="sel" id="flA" style="font-size:inherit;padding:.05em .3em;color:var(--ca)">a</button>x + <button class="sel" id="flB" style="font-size:inherit;padding:.05em .3em;color:var(--cb)">b</button></div>
+        <div id="flInfo"></div>
+      </div>
+      <div class="card">
+        <h3>Ejemplo</h3>
+        <p class="formula" style="font-size:1.6rem">y = <span class="ca">3</span>x + <span class="cb">4</span></p>
+        <p><b class="ca">a = 3</b> es la pendiente y <b class="cb">b = 4</b> es la ordenada al origen (OR.OR).</p>
+      </div>
+    </div>
+    <div class="col"><div class="card flush"><svg id="flG" aria-label="Gráfico de y = 3x + 4"></svg></div></div>
+  </section>
+
+  <!-- 3 · TABLA -->
+  <section class="sec" data-tab="tab" hidden>
+    <div class="col">
+      <div class="card">
+        <span class="eyebrow">3 · Tabla de valores</span>
+        <h2>Graficar y = <span class="fr"><span>1</span><span>2</span></span>x + 3 con una tabla</h2>
+        <p>Elegí un valor de <b class="cx">x</b>, reemplazalo en la fórmula y calculá <b class="cy">y</b>. Cada fila es un par ordenado, un punto de la recta.</p>
+        <p class="muted">Truco: como la pendiente es <span class="fr"><span>1</span><span>2</span></span>, conviene elegir x <b>pares</b> (−2, 0, 2, 4…) para que la mitad dé un número entero. Por eso x avanza de 2 en 2.</p>
+        <div class="stepper"><span class="big">x =</span>
+          <span class="grp"><button class="sbtn" id="tbUp" aria-label="Aumentar x">+</button><span class="val" id="tbX">0</span><button class="sbtn" id="tbDn" aria-label="Disminuir x">−</button></span>
+          <button class="btn" id="tbAdd">Agregar a la tabla</button></div>
+        <div id="tbMsg"></div>
+        <div class="tbl"><table id="tbTbl"></table></div>
+      </div>
+      <div class="card">
+        <h3>¿El punto pertenece a la recta?</h3>
+        <p>Un punto pertenece a la recta si <b>cumple la fórmula</b>.</p>
+        <div class="row"><button class="sel" data-chk="2,4">(2 ; 4)</button><button class="sel" data-chk="4,6">(4 ; 6)</button><button class="sel" data-chk="-6,0">(−6 ; 0)</button><button class="sel" data-chk="1,3">(1 ; 3)</button></div>
+        <div id="tbChk"></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card flush"><svg id="tbG" aria-label="Gráfico de y = x/2 + 3"></svg>
+        <div class="bar"><button class="btn" id="tbJoin" disabled>Unir los puntos</button><button class="btn ghost" id="tbReset">Empezar de nuevo</button></div></div>
+    </div>
+  </section>
+
+  <!-- 4 · PENDIENTE -->
+  <section class="sec" data-tab="pen" hidden>
+    <div class="col">
+      <div class="card">
+        <span class="eyebrow">4 · Pendiente y ordenada al origen</span>
+        <h2>Mové los deslizadores</h2>
+        <p class="formula" id="pnF" style="text-align:center"></p>
+        <div class="slider"><span class="lab ca">a</span><input type="range" id="sa" min="0" max="12" step="1" value="8" aria-label="Pendiente a"><span class="v ca" id="saV"></span></div>
+        <div class="slider"><span class="lab cb">b</span><input type="range" id="sb" min="-5" max="5" step="1" value="1" aria-label="Ordenada al origen b"><span class="v cb" id="sbV"></span></div>
+      </div>
+      <div class="card" id="pnInfo"></div>
+      <div class="card"><h3>Conclusión</h3>
+        <div class="concl" id="pnC">
+          <div style="--c:var(--ok)" data-k="pos"><b>a &gt; 0</b>Creciente: al aumentar x, aumenta y.</div>
+          <div style="--c:var(--bad)" data-k="neg"><b>a &lt; 0</b>Decreciente: al aumentar x, disminuye y.</div>
+          <div style="--c:var(--muted)" data-k="cero"><b>a = 0</b>Constante: y = b, recta horizontal.</div>
+        </div></div>
+    </div>
+    <div class="col"><div class="card flush"><svg id="pnG" aria-label="Recta que cambia con los deslizadores"></svg></div></div>
+  </section>
+
+  <!-- 5 · RAÍZ -->
+  <section class="sec" data-tab="raiz" hidden>
+    <div class="col">
+      <div class="card">
+        <span class="eyebrow">5 · Raíz y ordenada al origen</span>
+        <h2>¿Dónde corta la recta a los ejes?</h2>
+        <div class="row" id="rzSel" role="group" aria-label="Función"></div>
+        <p>La <b class="cb">ordenada al origen</b> es donde corta al eje y: siempre es (0 ; b). La <b class="cr">raíz</b> o cero es donde corta al eje x: tiene la forma (x ; 0).</p>
+        <div class="tbl"><table id="rzTbl"></table></div>
+        <div class="steps" id="rzSteps"></div>
+        <div class="row"><button class="btn" id="rzNext">Siguiente paso</button><button class="btn ghost" id="rzReset">Reiniciar</button></div>
+      </div>
+    </div>
+    <div class="col"><div class="card flush"><svg id="rzG" aria-label="Gráfico con raíz y ordenada al origen"></svg></div></div>
+  </section>
+
+  <!-- 6 · DOS PUNTOS -->
+  <section class="sec" data-tab="dos" hidden>
+    <div class="col">
+      <div class="card">
+        <span class="eyebrow">6 · ¿Cuántos puntos necesito?</span>
+        <h2>¿Cuántos puntos hacen falta para dibujar una recta?</h2>
+        <p>Tocá el plano para marcar puntos.</p>
+        <div id="dsInfo"></div>
+        <div class="row"><button class="btn ghost" id="dsReset">Borrar puntos</button></div>
+      </div>
+      <div class="card">
+        <h3>Método rápido: OR.OR y un punto</h3>
+        <p>Para graficar <b class="formula" style="font-size:1.1rem">y = <span class="ca">2</span>x + <span class="cb">3</span></b> alcanza con dos puntos. Uno ya lo tenemos: la ordenada al origen.</p>
+        <div class="steps" id="dsSteps"></div>
+        <div class="row"><button class="btn" id="dsFast">Siguiente paso</button></div>
+      </div>
+    </div>
+    <div class="col"><div class="card flush"><svg id="dsG" aria-label="Plano para marcar puntos" style="cursor:crosshair"></svg></div></div>
+  </section>
+
+  <!-- 7 · EXPLÍCITA -->
+  <section class="sec" data-tab="exp" hidden>
+    <div class="col">
+      <div class="card">
+        <span class="eyebrow">7 · Forma explícita e implícita</span>
+        <h2>Despejar y</h2>
+        <p>En <b>forma explícita</b> (y = ax + b) se ven la pendiente y la ordenada al origen. Si la fórmula está <b>desordenada</b> (forma implícita), hay que despejar “y” en función de x.</p>
+        <div class="row" id="exSel" role="group" aria-label="Ejemplo"></div>
+        <div class="steps" id="exSteps"></div>
+        <div class="row"><button class="btn" id="exNext">Siguiente paso</button><button class="btn ghost" id="exReset">Reiniciar</button></div>
+        <div id="exEnd"></div>
+      </div>
+    </div>
+    <div class="col"><div class="card flush"><svg id="exG" aria-label="Gráfico de la forma explícita"></svg></div></div>
+  </section>
+
+  <!-- 8 · PARALELAS -->
+  <section class="sec" data-tab="par" hidden>
+    <div class="col">
+      <div class="card">
+        <span class="eyebrow">8 · Rectas paralelas y perpendiculares</span>
+        <div class="row" role="group" aria-label="Tipo"><button class="sel" id="pmPar" aria-pressed="true">Paralelas</button><button class="sel" id="pmPerp" aria-pressed="false">Perpendiculares</button></div>
+        <div id="ppTxt"></div>
+        <div class="slider"><span class="lab ca">a</span><input type="range" id="pa" min="0" max="14" step="1" value="11" aria-label="Pendiente de la primera recta"><span class="v ca" id="paV"></span></div>
+        <div class="box" id="ppEq"></div>
+      </div>
+    </div>
+    <div class="col"><div class="card flush"><svg id="ppG" aria-label="Dos rectas"></svg></div></div>
+  </section>
+</div>
+
+<canvas id="ink" aria-hidden="true"></canvas>
+<button id="pen" class="pen" aria-pressed="false" aria-label="Lápiz láser" title="Lápiz láser: el trazo se borra solo">
+  <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 20l1.2-4.6L15.6 5a2 2 0 0 1 2.8 0l.6.6a2 2 0 0 1 0 2.8L8.6 18.8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M13.5 7l3.5 3.5" stroke="currentColor" stroke-width="2"/></svg>
+  <span>Lápiz</span>
+</button>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const m=v=>(v<0?"−"+Math.abs(v):""+v);
+const par=v=>v<0?`(${m(v)})`:m(v);
+// ---------- fracciones ----------
+const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
+function F(n,d=1){ if(d<0){n=-n;d=-d;} const g=gcd(Math.abs(n),d)||1; return [n/g,d/g]; }
+const fv=f=>f[0]/f[1];
+const ft=f=>f[1]===1?m(f[0]):(f[0]<0?"−":"")+Math.abs(f[0])+"/"+f[1];
+const fh=f=>f[1]===1?m(f[0]):`${f[0]<0?"−":""}<span class="fr"><span>${Math.abs(f[0])}</span><span>${f[1]}</span></span>`;
+// fórmula y = ax + b en HTML coloreado (a,b fracciones)
+function eqH(a,b,{color=true}={}){
+  const A=color?s=>`<span class="ca">${s}</span>`:s=>s, B=color?s=>`<span class="cb">${s}</span>`:s=>s;
+  let s="y = ";
+  if(a[0]===0){ return s+B(fh(b)); }
+  if(a[0]===a[1]) s+="x"; else if(-a[0]===a[1]) s+=A("−")+"x"; else s+=A(fh(a))+"x";
+  if(b[0]>0) s+=" + "+B(fh(b)); else if(b[0]<0) s+=" − "+B(fh([-b[0],b[1]]));
+  return s;
+}
+// ---------- plano cartesiano reutilizable ----------
+let clipN=0;
+function Plane(svg,{x0,x1,y0,y1,W=560,pad=14,lab=1}){
+  const H=Math.round((W-2*pad)*(y1-y0)/(x1-x0)+2*pad);
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const P={W,H,x0,x1,y0,y1,id:"c"+(++clipN)};
+  P.sx=x=>pad+(x-x0)/(x1-x0)*(W-2*pad);
+  P.sy=y=>pad+(y1-y)/(y1-y0)*(H-2*pad);
+  P.ix=px=>x0+(px-pad)/(W-2*pad)*(x1-x0);
+  P.iy=py=>y1-(py-pad)/(H-2*pad)*(y1-y0);
+  P.base=()=>{
+    const ink=css("--ink"),mu=css("--muted"),g=css("--grid"); let s=`<defs><clipPath id="${P.id}"><rect x="${pad}" y="${pad}" width="${W-2*pad}" height="${H-2*pad}"/></clipPath></defs>`;
+    s+=`<rect x="0" y="0" width="${W}" height="${H}" fill="${css("--panel")}"/>`;
+    for(let x=Math.ceil(x0);x<=x1;x++) s+=`<line x1="${P.sx(x)}" y1="${P.sy(y0)}" x2="${P.sx(x)}" y2="${P.sy(y1)}" stroke="${g}"/>`;
+    for(let y=Math.ceil(y0);y<=y1;y++) s+=`<line x1="${P.sx(x0)}" y1="${P.sy(y)}" x2="${P.sx(x1)}" y2="${P.sy(y)}" stroke="${g}"/>`;
+    s+=`<line x1="${P.sx(x0)}" y1="${P.sy(0)}" x2="${P.sx(x1)-4}" y2="${P.sy(0)}" stroke="${ink}" stroke-width="2"/><polygon points="${P.sx(x1)},${P.sy(0)} ${P.sx(x1)-12},${P.sy(0)-6} ${P.sx(x1)-12},${P.sy(0)+6}" fill="${ink}"/>`;
+    s+=`<line x1="${P.sx(0)}" y1="${P.sy(y0)}" x2="${P.sx(0)}" y2="${P.sy(y1)+4}" stroke="${ink}" stroke-width="2"/><polygon points="${P.sx(0)},${P.sy(y1)} ${P.sx(0)-6},${P.sy(y1)+12} ${P.sx(0)+6},${P.sy(y1)+12}" fill="${ink}"/>`;
+    const mono='font-family="JetBrains Mono, monospace"';
+    for(let x=Math.ceil(x0);x<=x1-0.5;x++){ if(!x||x%lab) continue; s+=`<line x1="${P.sx(x)}" y1="${P.sy(0)-4}" x2="${P.sx(x)}" y2="${P.sy(0)+4}" stroke="${ink}"/><text x="${P.sx(x)}" y="${P.sy(0)+19}" text-anchor="middle" font-size="14" ${mono} fill="${mu}">${m(x)}</text>`; }
+    for(let y=Math.ceil(y0);y<=y1-0.5;y++){ if(!y||y%lab) continue; s+=`<line x1="${P.sx(0)-4}" y1="${P.sy(y)}" x2="${P.sx(0)+4}" y2="${P.sy(y)}" stroke="${ink}"/><text x="${P.sx(0)-8}" y="${P.sy(y)+5}" text-anchor="end" font-size="14" ${mono} fill="${mu}">${m(y)}</text>`; }
+    s+=`<text x="${P.sx(0)-7}" y="${P.sy(0)+19}" text-anchor="end" font-size="14" ${mono} fill="${mu}">0</text>`;
+    const bf='font-family="Atkinson Hyperlegible, sans-serif" font-weight="700"';
+    s+=`<text x="${P.sx(x1)-6}" y="${P.sy(0)-10}" text-anchor="end" font-size="19" ${bf} fill="${css("--abs")}">x</text><text x="${P.sx(0)+10}" y="${P.sy(y1)+16}" font-size="19" ${bf} fill="${css("--ord")}">y</text>`;
+    return s;
+  };
+  P.line=(a,b,col,w=3.5,extra="")=>`<line clip-path="url(#${P.id})" x1="${P.sx(x0)}" y1="${P.sy(a*x0+b)}" x2="${P.sx(x1)}" y2="${P.sy(a*x1+b)}" stroke="${col}" stroke-width="${w}" stroke-linecap="round" ${extra}/>`;
+  P.seg=(xa,ya,xb,yb,col,w=3.5,extra="")=>`<line clip-path="url(#${P.id})" x1="${P.sx(xa)}" y1="${P.sy(ya)}" x2="${P.sx(xb)}" y2="${P.sy(yb)}" stroke="${col}" stroke-width="${w}" stroke-linecap="round" ${extra}/>`;
+  P.pt=(x,y,col,label,{r=7,dx=10,dy=-10,anchor="start"}={})=>{
+    let s=`<circle cx="${P.sx(x)}" cy="${P.sy(y)}" r="${r}" fill="${col}" stroke="${css("--panel")}" stroke-width="2.5"/>`;
+    if(label) s+=`<text x="${P.sx(x)+dx}" y="${P.sy(y)+dy}" text-anchor="${anchor}" font-size="16" font-family="JetBrains Mono, monospace" font-weight="700" fill="${col}" paint-order="stroke" stroke="${css("--panel")}" stroke-width="4">${label}</text>`;
+    return s;
+  };
+  P.toLocal=e=>{const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(svg.getScreenCTM().inverse());return [P.ix(q.x),P.iy(q.y)];};
+  return P;
+}
+// ---------- pestañas ----------
+const TABS=[["maq","La máquina"],["fl","Función lineal"],["tab","Tabla de valores"],["pen","Pendiente"],["raiz","Raíz y OR.OR"],["dos","¿Cuántos puntos?"],["exp","Forma explícita"],["par","Paralelas y perpendiculares"]];
+const DRAW={};
+TABS.forEach(([id,t],i)=>{const b=document.createElement("button");b.className="tab";b.innerHTML=`<span class="n">${i+1}</span>${t}`;b.dataset.id=id;b.onclick=()=>go(id);$("tabs").appendChild(b);});
+let cur="maq";
+function go(id){ cur=id; document.querySelectorAll("section[data-tab]").forEach(s=>s.hidden=s.dataset.tab!==id);
+  [...$("tabs").children].forEach(b=>b.setAttribute("aria-pressed",b.dataset.id===id)); DRAW[id]&&DRAW[id](); }
+
+/* =====================================================================
+   1 · LA MÁQUINA
+===================================================================== */
+const MQ={pts:[],anim:null,joined:0,last:null};
+const mqP=Plane($("mqG"),{x0:-4.5,x1:4.5,y0:-6.5,y1:8.5,W:470});
+const mqF=x=>2*x+1;
+for(let v=-3;v<=3;v++){const b=document.createElement("button");b.className="chip";b.textContent=m(v);b.dataset.v=v;b.onclick=()=>feed(v);$("mqChips").appendChild(b);}
+function machine(st){ // st: {phase, x, y, t}
+  const c=k=>css(k), sv=$("mq");
+  const ph=st?st.phase:"idle", t=st?st.t:0;
+  const rot=st&&ph!=="idle"?t*360*2:0;
+  let s="";
+  // tolva
+  s+=`<polygon points="130,28 290,28 240,96 180,96" fill="${c("--mach2")}" stroke="${c("--ink")}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  s+=`<text x="210" y="20" text-anchor="middle" font-size="15" font-family="Atkinson Hyperlegible, sans-serif" font-weight="700" fill="${c("--abs")}">ENTRA x</text>`;
+  // cuerpo
+  s+=`<rect x="80" y="96" width="260" height="196" rx="20" fill="${c("--mach")}" stroke="${c("--ink")}" stroke-width="2.5"/>`;
+  s+=`<rect x="80" y="96" width="260" height="22" rx="10" fill="${c("--mach2")}"/>`;
+  // pantalla
+  const scr=ph==="calc"||ph==="out"||ph==="done"?`2 · ${par(st.x)} + 1 = ${m(st.y)}`:"y = 2x + 1";
+  s+=`<rect x="104" y="128" width="212" height="58" rx="10" fill="${c("--screen")}" stroke="${c("--ink")}" stroke-width="2"/>`;
+  s+=`<text x="210" y="167" text-anchor="middle" font-size="${scr.length>12?22:26}" font-family="JetBrains Mono, monospace" font-weight="700" fill="${c("--glow")}">${scr}</text>`;
+  // engranajes
+  const gear=(cx,cy,r,dir)=>`<g transform="rotate(${rot*dir} ${cx} ${cy})"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${c("--grid2")}" stroke-width="10" stroke-dasharray="7 6"/><circle cx="${cx}" cy="${cy}" r="${r-9}" fill="${c("--mach2")}" stroke="${c("--grid2")}" stroke-width="3"/><line x1="${cx-r+10}" y1="${cy}" x2="${cx+r-10}" y2="${cy}" stroke="${c("--grid2")}" stroke-width="4"/><line x1="${cx}" y1="${cy-r+10}" x2="${cx}" y2="${cy+r-10}" stroke="${c("--grid2")}" stroke-width="4"/></g>`;
+  s+=gear(150,238,32,1)+gear(214,248,22,-1.45);
+  // luz
+  const on=ph==="calc"; s+=`<circle cx="300" cy="222" r="11" fill="${on?c("--glow"):c("--grid2")}" stroke="${c("--ink")}" stroke-width="2"/>`;
+  s+=`<text x="300" y="262" text-anchor="middle" font-size="13" font-family="Atkinson Hyperlegible, sans-serif" font-weight="700" fill="${c("--grid2")}">f(x)</text>`;
+  // tobogán de salida
+  s+=`<polygon points="340,250 410,312 410,330 340,280" fill="${c("--mach2")}" stroke="${c("--ink")}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  s+=`<text x="380" y="352" text-anchor="middle" font-size="15" font-family="Atkinson Hyperlegible, sans-serif" font-weight="700" fill="${c("--ord")}">SALE y</text>`;
+  // bolitas
+  const ball=(x,y,val,col,r=24)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${col}" stroke="${c("--ink")}" stroke-width="2.5"/><text x="${x}" y="${y+8}" text-anchor="middle" font-size="${String(val).length>2?18:22}" font-family="JetBrains Mono, monospace" font-weight="700" fill="#fff">${val}</text>`;
+  if(ph==="in"){ const yy=4+t*96, r=24*(1-t*.45); s=ball(210,yy,m(st.x),c("--abs"),r)+s; if(t<.7) s+=ball(210,yy,m(st.x),c("--abs"),r); }
+  if(ph==="out"){ const xx=340+t*42, yy=262+t*44; s+=ball(xx,yy,m(st.y),c("--ord")); }
+  if(ph==="done"){ s+=ball(382,306,m(st.y),c("--ord")); }
+  sv.innerHTML=s;
+}
+function feed(v){
+  if(MQ.anim) return;
+  const y=mqF(v), dur=reduce?[1,1,1]:[650,1100,650];
+  let phase="in", t0=performance.now();
+  document.querySelectorAll("#mqChips .chip").forEach(b=>b.disabled=true);
+  const step=now=>{
+    let t=(now-t0)/dur[["in","calc","out"].indexOf(phase)];
+    if(t>=1){ if(phase==="in"){phase="calc";t0=now;t=0;} else if(phase==="calc"){phase="out";t0=now;t=0;} else { MQ.anim=null; machine({phase:"done",x:v,y,t:1}); arrived(v,y); return; } }
+    machine({phase,x:v,y,t:Math.min(t,1)}); MQ.anim=requestAnimationFrame(step);
+  };
+  MQ.anim=requestAnimationFrame(step);
+}
+function arrived(x,y){
+  if(!MQ.pts.some(p=>p[0]===x)) MQ.pts.push([x,y]);
+  MQ.last=[x,y];
+  document.querySelectorAll("#mqChips .chip").forEach(b=>{b.disabled=false;b.classList.toggle("used",MQ.pts.some(p=>p[0]===+b.dataset.v));});
+  $("mqMsg").innerHTML=`<div class="box hl" style="--c:var(--ca)"><p style="font-size:1.15rem">Entró el <b class="cx">${m(x)}</b> y salió el <b class="cy">${m(y)}</b>. La fórmula relaciona el <b class="cx">${m(x)}</b> con el <b class="cy">${m(y)}</b>.</p><p class="big">Par ordenado: (<span class="cx">${m(x)}</span> ; <span class="cy">${m(y)}</span>)</p></div>`;
+  drawMq();
+}
+function drawVenn(){
+  const c=k=>css(k), sv=$("mqVenn");
+  let s=`<ellipse cx="72" cy="185" rx="60" ry="145" fill="${c("--abs")}" fill-opacity=".08" stroke="${c("--abs")}" stroke-width="3"/>`;
+  s+=`<ellipse cx="228" cy="185" rx="60" ry="145" fill="${c("--ord")}" fill-opacity=".08" stroke="${c("--ord")}" stroke-width="3"/>`;
+  const bf='font-family="Atkinson Hyperlegible, sans-serif" font-weight="700"';
+  s+=`<text x="72" y="26" text-anchor="middle" font-size="15" ${bf} fill="${c("--abs")}">x (entra)</text><text x="228" y="26" text-anchor="middle" font-size="15" ${bf} fill="${c("--ord")}">y (sale)</text>`;
+  const pts=[...MQ.pts].sort((a,b)=>a[0]-b[0]);
+  pts.forEach(([x,y],i)=>{ const yy=78+i*38, last=MQ.last&&MQ.last[0]===x;
+    s+=`<line x1="100" y1="${yy}" x2="190" y2="${yy}" stroke="${last?c("--ca"):c("--ink")}" stroke-width="${last?3.5:2.2}"/><polygon points="198,${yy} 186,${yy-6} 186,${yy+6}" fill="${last?c("--ca"):c("--ink")}"/>`;
+    s+=`<text x="72" y="${yy+7}" text-anchor="middle" font-size="20" font-family="JetBrains Mono, monospace" font-weight="700" fill="${c("--abs")}">${m(x)}</text>`;
+    s+=`<text x="228" y="${yy+7}" text-anchor="middle" font-size="20" font-family="JetBrains Mono, monospace" font-weight="700" fill="${c("--ord")}">${m(y)}</text>`; });
+  if(!pts.length) s+=`<text x="150" y="190" text-anchor="middle" font-size="14" font-family="Atkinson Hyperlegible, sans-serif" fill="${c("--muted")}">Todavía no entró ningún número</text>`;
+  sv.innerHTML=s;
+}
+function drawMq(){
+  machine(MQ.last?{phase:"done",x:MQ.last[0],y:MQ.last[1],t:1}:null);
+  drawVenn();
+  const pts=[...MQ.pts].sort((a,b)=>a[0]-b[0]);
+  $("mqTbl").innerHTML=`<thead><tr><th class="cx">x</th><th class="cy">y = 2x + 1</th></tr></thead><tbody>${pts.map(([x,y])=>`<tr><td class="cx">${m(x)}</td><td class="calc">2 · <span class="cx">${par(x)}</span> + 1 = <b class="cy">${m(y)}</b></td></tr>`).join("")||`<tr><td colspan="2" class="muted" style="font-family:var(--f-body)">Vacía</td></tr>`}</tbody>`;
+  const P=mqP; let s=P.base();
+  if(MQ.joined===1&&pts.length>1) s+=P.seg(pts[0][0],pts[0][1],pts[pts.length-1][0],pts[pts.length-1][1],css("--rect"),4);
+  if(MQ.joined===2) s+=P.line(2,1,css("--rect"),4);
+  pts.forEach(([x,y])=>{ const last=MQ.last&&MQ.last[0]===x; s+=P.pt(x,y,last?css("--ca"):css("--rect"),`(${m(x)} ; ${m(y)})`,{r:last?9:7,dx:x>0?-12:12,anchor:x>0?"end":"start"}); });
+  $("mqG").innerHTML=s;
+  $("mqJoin").disabled=pts.length<2||MQ.joined===2;
+  $("mqJoin").textContent=MQ.joined===0?"Unir los puntos":"Extender: la recta completa";
+  let side=`<span class="eyebrow">Tres formas de mostrar la misma relación</span><p><b>Fórmula</b> (la máquina), <b>tabla</b> y <b>gráfico</b>. Las tres dicen lo mismo: a cada <b class="cx">x</b> que entra le corresponde <b>un único</b> <b class="cy">y</b> que sale. Por eso es una <b>función</b>.</p>`;
+  if(MQ.joined===1) side+=`<div class="box hl" style="--c:var(--rect)"><h3>¡Los puntos están alineados!</h3><p>Todos los puntos de esta fórmula quedan sobre una misma línea recta.</p></div>`;
+  if(MQ.joined===2) side+=`<div class="box hl" style="--c:var(--rect)"><h3>Es una función lineal</h3><p>Entre los puntos también entran números como 0,5 o 1,7, así que la recta se dibuja completa. Una fórmula como <b>y = 2x + 1</b> da siempre una recta: es una <b>función lineal</b>. La vemos en el paso 2.</p></div>`;
+  $("mqSide").innerHTML=side;
+}
+$("mqJoin").onclick=()=>{ MQ.joined=Math.min(2,MQ.joined+1); drawMq(); };
+$("mqReset").onclick=()=>{ MQ.pts=[]; MQ.joined=0; MQ.last=null; $("mqMsg").innerHTML=""; document.querySelectorAll("#mqChips .chip").forEach(b=>b.classList.remove("used")); drawMq(); };
+DRAW.maq=drawMq;
+
+/* =====================================================================
+   2 · FUNCIÓN LINEAL: partes
+===================================================================== */
+let flSel=null;
+const flP=Plane($("flG"),{x0:-4.5,x1:4.5,y0:-4.5,y1:9.5,W:520});
+function drawFl(){
+  const P=flP; let s=P.base();
+  s+=P.line(3,4,css("--rect"),4);
+  if(flSel==="a"){ const ca=css("--ca");
+    s+=P.seg(0,4,1,4,ca,3.5,'stroke-dasharray="7 6"')+P.seg(1,4,1,7,ca,3.5,'stroke-dasharray="7 6"');
+    s+=`<text x="${(P.sx(0)+P.sx(1))/2}" y="${P.sy(4)+22}" text-anchor="middle" font-size="16" font-family="JetBrains Mono, monospace" font-weight="700" fill="${ca}">+1</text>`;
+    s+=`<text x="${P.sx(1)+10}" y="${P.sy(5.5)+5}" font-size="16" font-family="JetBrains Mono, monospace" font-weight="700" fill="${ca}">+3 = a</text>`;
+    s+=P.pt(0,4,css("--rect"),"")+P.pt(1,7,css("--rect"),"(1 ; 7)",{dx:-12,anchor:"end"});
+  }
+  if(flSel==="b"){ s+=`<circle cx="${P.sx(0)}" cy="${P.sy(4)}" r="18" fill="none" stroke="${css("--cb")}" stroke-width="3"/>`+P.pt(0,4,css("--cb"),"(0 ; 4)",{dx:14}); }
+  $("flG").innerHTML=s;
+  $("flA").setAttribute("aria-pressed",flSel==="a"); $("flB").setAttribute("aria-pressed",flSel==="b");
+  $("flInfo").innerHTML=flSel==="a"?`<div class="box hl" style="--c:var(--ca)"><h3>a · pendiente</h3><p>Indica la <b>inclinación</b> de la recta: cuánto sube (o baja) <b>y</b> cada vez que <b>x</b> avanza 1. En el ejemplo, por cada paso a la derecha la recta sube 3.</p></div>`
+    :flSel==="b"?`<div class="box hl" style="--c:var(--cb)"><h3>b · ordenada al origen (OR.OR)</h3><p>Indica <b>dónde la recta corta al eje y</b>. Es el punto <b>(0 ; b)</b>. En el ejemplo corta en (0 ; 4).</p></div>`
+    :`<div class="box"><p class="muted">Tocá la <b class="ca">a</b> o la <b class="cb">b</b>.</p></div>`;
+}
+$("flA").onclick=()=>{flSel=flSel==="a"?null:"a";drawFl();}; $("flB").onclick=()=>{flSel=flSel==="b"?null:"b";drawFl();};
+DRAW.fl=drawFl;
+
+/* =====================================================================
+   3 · TABLA DE VALORES  y = 2x + 3
+===================================================================== */
+const TB={x:0,rows:[],joined:false,chk:null};
+const tbP=Plane($("tbG"),{x0:-7.5,x1:7.5,y0:-4.5,y1:8.5,W:540});
+const HALF='<span class="fr"><span>1</span><span>2</span></span>';
+const tbFr=x=>F(x+6,2); // ½·x + 3 como fracción
+const L="ABCDEFGHIJ";
+const tbF=x=>x/2+3;
+function drawTb(){
+  $("tbX").textContent=m(TB.x);
+  $("tbTbl").innerHTML=`<thead><tr><th class="cx">x</th><th class="cy">y = ${HALF}x + 3</th><th class="out"></th></tr></thead><tbody>${TB.rows.map(([x,y],i)=>`<tr><td class="cx">${m(x)}</td><td class="calc">${HALF} · <span class="cx">${par(x)}</span> + 3 = <b class="cy">${m(y)}</b></td><td class="out">→ <b>${L[i]}</b> = (<span class="cx">${m(x)}</span> ; <span class="cy">${m(y)}</span>)</td></tr>`).join("")||`<tr><td colspan="2" class="muted" style="font-family:var(--f-body)">Elegí un x y tocá “Agregar a la tabla”</td><td class="out"></td></tr>`}</tbody>`;
+  const P=tbP; let s=P.base();
+  if(TB.joined||TB.chk) s+=P.line(.5,3,css("--rect"),TB.joined?4:2.5,TB.joined?"":'stroke-dasharray="6 8" opacity=".6"');
+  TB.rows.forEach(([x,y],i)=>s+=P.pt(x,y,css("--rect"),L[i],{dx:-12,anchor:"end"}));
+  if(TB.chk){ const [x,y]=TB.chk, ok=tbF(x)===y, col=ok?css("--ok"):css("--bad");
+    s+=`<circle cx="${P.sx(x)}" cy="${P.sy(y)}" r="15" fill="none" stroke="${col}" stroke-width="3"/>`+P.pt(x,y,col,`(${m(x)} ; ${m(y)}) ${ok?"✓":"✗"}`,{dx:16,dy:x<-4?-14:22}); }
+  $("tbG").innerHTML=s;
+  $("tbJoin").disabled=TB.rows.length<2||TB.joined;
+}
+$("tbUp").onclick=()=>{TB.x=Math.min(6,TB.x+2);$("tbMsg").innerHTML="";drawTb();};
+$("tbDn").onclick=()=>{TB.x=Math.max(-6,TB.x-2);$("tbMsg").innerHTML="";drawTb();};
+$("tbAdd").onclick=()=>{
+  if(TB.rows.some(r=>r[0]===TB.x)){ $("tbMsg").innerHTML=`<div class="msg bad">El ${m(TB.x)} ya está en la tabla. Elegí otro valor.</div>`; return; }
+  if(TB.rows.length>=7) return;
+  TB.rows.push([TB.x,tbF(TB.x)]); const i=TB.rows.length-1;
+  $("tbMsg").innerHTML=`<div class="msg ok">x = ${m(TB.x)} → ${HALF} · ${par(TB.x)} + 3 = ${m(tbF(TB.x))} → ${L[i]} = (${m(TB.x)} ; ${m(tbF(TB.x))})</div>`; drawTb(); };
+$("tbJoin").onclick=()=>{TB.joined=true;drawTb();};
+$("tbReset").onclick=()=>{TB.rows=[];TB.joined=false;TB.chk=null;TB.x=0;$("tbMsg").innerHTML="";$("tbChk").innerHTML="";document.querySelectorAll("[data-chk]").forEach(b=>b.setAttribute("aria-pressed","false"));drawTb();};
+document.querySelectorAll("[data-chk]").forEach(b=>b.onclick=()=>{
+  const [x,y]=b.dataset.chk.split(",").map(Number), r=tbF(x), ok=r===y; TB.chk=[x,y];
+  document.querySelectorAll("[data-chk]").forEach(o=>o.setAttribute("aria-pressed",o===b));
+  $("tbChk").innerHTML=`<div class="box hl" style="--c:var(${ok?"--ok":"--bad"})"><p class="big" style="font-size:1.15rem">x = <span class="cx">${m(x)}</span> → ${HALF} · ${par(x)} + 3 = <span class="cy">${fh(tbFr(x))}</span> ${ok?"=":"≠"} ${m(y)}</p><p><b>${ok?`Sí pertenece: (${m(x)} ; ${m(y)}) cumple la fórmula.${y===0?" Además, como y = 0, es la raíz.":""}`:`No pertenece: cuando x = ${m(x)}, la recta pasa por y = ${fh(tbFr(x))}, no por ${m(y)}.`}</b></p></div>`;
+  drawTb(); });
+DRAW.tab=drawTb;
+
+/* =====================================================================
+   4 · PENDIENTE (deslizadores)
+===================================================================== */
+const AV=[-3,-2.5,-2,-1.5,-1,-.5,0,.5,1,1.5,2,2.5,3];
+const pnP=Plane($("pnG"),{x0:-6.5,x1:6.5,y0:-6.5,y1:6.5,W:560});
+const toF=v=>F(Math.round(v*2),2);
+function drawPn(){
+  const a=AV[+$("sa").value], b=+$("sb").value, A=toF(a), B=F(b);
+  $("saV").innerHTML=fh(A); $("sbV").textContent=m(b);
+  $("pnF").innerHTML=eqH(A,B);
+  const k=a>0?"pos":a<0?"neg":"cero";
+  document.querySelectorAll("#pnC div").forEach(d=>d.classList.toggle("on",d.dataset.k===k));
+  const P=pnP; let s=P.base();
+  s+=P.line(a,b,a>0?css("--ok"):a<0?css("--bad"):css("--muted"),4.5);
+  // triángulo de pendiente
+  if(a!==0){ s+=P.seg(0,b,1,b,css("--ca"),3,'stroke-dasharray="6 5"')+P.seg(1,b,1,b+a,css("--ca"),3,'stroke-dasharray="6 5"');
+    s+=`<text x="${P.sx(1)+8}" y="${P.sy(b+a/2)+5}" font-size="15" font-family="JetBrains Mono, monospace" font-weight="700" fill="${css("--ca")}" paint-order="stroke" stroke="${css("--panel")}" stroke-width="4">${a>0?"+":""}${ft(A)}</text>`; }
+  // raíz
+  let raiz="";
+  if(a!==0){ const R=F(-b*A[1],A[0]); const r=fv(R);
+    if(Math.abs(r)<=6.5) s+=P.pt(r,0,css("--root"),`(${ft(R)} ; 0)`,{dy:b>=0===(a>0)?24:-12});
+    raiz=`La <b class="cr">raíz</b> es x = <b class="cr">${fh(R)}</b>: ahí la recta corta al eje x.`; }
+  else raiz=b===0?"La recta coincide con el eje x.":"Es una recta horizontal: <b>no corta al eje x</b>, no tiene raíz.";
+  s+=P.pt(0,b,css("--cb"),`(0 ; ${m(b)})`,{dx:-12,anchor:"end"});
+  $("pnG").innerHTML=s;
+  const pill=a>0?`<span class="pill" style="background:var(--ok)">Creciente</span>`:a<0?`<span class="pill" style="background:var(--bad)">Decreciente</span>`:`<span class="pill" style="background:var(--muted)">Constante</span>`;
+  $("pnInfo").innerHTML=`<div class="row">${pill}<span>pendiente <b class="ca">a = ${fh(A)}</b></span></div>
+    <p>${a>0?`Como a es <b>positiva</b>, al avanzar 1 en x la recta <b>sube</b> ${ft(A)}.`:a<0?`Como a es <b>negativa</b>, al avanzar 1 en x la recta <b>baja</b> ${ft([-A[0],A[1]])}.`:"Como a = 0, y vale siempre lo mismo."}</p>
+    <p>La <b class="cb">ordenada al origen</b> es <b class="cb">b = ${m(b)}</b>: la recta corta al eje y en <b class="cb">(0 ; ${m(b)})</b>. Coincide con el término independiente de la fórmula.</p><p>${raiz}</p>`;
+}
+$("sa").oninput=drawPn; $("sb").oninput=drawPn;
+DRAW.pen=drawPn;
+
+/* =====================================================================
+   5 · RAÍZ analítica
+===================================================================== */
+const RZF=[{a:3,b:1,x2:-1},{a:2,b:-4,x2:1},{a:-1,b:3,x2:1},{a:-2,b:5,x2:1}];
+let RZ={f:0,step:0};
+const rzP=Plane($("rzG"),{x0:-6.5,x1:6.5,y0:-6.5,y1:6.5,W:560});
+RZF.forEach((f,i)=>{const b=document.createElement("button");b.className="sel";b.innerHTML=eqH(F(f.a),F(f.b),{color:false});b.onclick=()=>{RZ={f:i,step:0};drawRz();};$("rzSel").appendChild(b);});
+const ax=a=>a===1?"x":a===-1?"−x":m(a)+"x";
+function rzSteps(f){
+  const {a,b}=f, R=F(-b,a);
+  const st=[];
+  st.push([`0 = ${ax(a)} ${b>0?"+":"−"} ${Math.abs(b)}`,"Reemplazamos y por 0: buscamos el x que hace que y valga 0."]);
+  st.push([`0 ${b>0?"−":"+"} ${Math.abs(b)} = ${ax(a)}`,`Pasamos el ${m(b)} al otro lado ${b>0?"restando":"sumando"}.`]);
+  st.push([`${m(-b)} = ${ax(a)}`,"Resolvemos la cuenta."]);
+  if(a!==1) st.push([a===-1?`${m(-b)} : (−1) = x`:`<span class="fr"><span>${m(-b)}</span><span>${par(a)}</span></span> = x`,`Pasamos el ${m(a)} dividiendo.`]);
+  st.push([`x = ${fh(R)}`,R[1]===1?"La raíz es un número entero.":"Simplificamos la fracción si se puede."]);
+  return st;
+}
+function drawRz(){
+  const f=RZF[RZ.f], A=F(f.a), B=F(f.b), R=F(-f.b,f.a), steps=rzSteps(f), n=RZ.step;
+  [...$("rzSel").children].forEach((b,i)=>b.setAttribute("aria-pressed",i===RZ.f));
+  const y2=f.a*f.x2+f.b, eqs=steps.length, total=3+eqs+1;
+  const rows=[[0,f.b,"cb"],[f.x2,y2,""],[null,0,"cr"]];
+  let tb=`<thead><tr><th class="cx">x</th><th>${eqH(A,B,{color:false})}</th></tr></thead><tbody>`;
+  rows.forEach((r,i)=>{ if(n<=i) return; const isR=i===2;
+    const xs=isR?(n>=total?`<b class="cr">${fh(R)}</b>`:`<b class="cr">¿x?</b>`):`<span class="cx">${m(r[0])}</span>`;
+    tb+=`<tr><td>${xs}</td><td class="${r[2]||"cy"}">${m(r[1])}${i===0?' <span style="font-family:var(--f-body);font-size:.85rem">← OR.OR</span>':""}${isR?' <span style="font-family:var(--f-body);font-size:.85rem">← raíz</span>':""}</td></tr>`; });
+  $("rzTbl").innerHTML=tb+"</tbody>";
+  let h=""; const k=Math.max(0,n-3);
+  if(n>=3) h+=`<p><b>¿Cuánto vale x cuando y = 0?</b> Armamos una ecuación:</p>`;
+  steps.slice(0,k).forEach((s,i)=>h+=`<div class="step ${i===k-1?"new":""}"><div class="e">${s[0]}</div><div class="nt">${s[1]}</div></div>`);
+  if(n>=total) h+=`<div class="msg ok">La raíz es (${ft(R)} ; 0). La ordenada al origen es (0 ; ${m(f.b)}).</div>`;
+  if(n===0) h=`<p class="muted">Tocá “Siguiente paso”.</p>`;
+  $("rzSteps").innerHTML=h;
+  $("rzNext").disabled=n>=total;
+  const P=rzP; let s=P.base();
+  if(n>=2) s+=P.line(f.a,f.b,css("--rect"),n>=total?4:2.5,n>=total?"":'stroke-dasharray="6 8"');
+  if(n>=1) s+=P.pt(0,f.b,css("--cb"),`(0 ; ${m(f.b)})`,{dx:-12,anchor:"end"});
+  if(n>=2) s+=P.pt(f.x2,y2,css("--rect"),`(${m(f.x2)} ; ${m(y2)})`,{dx:12});
+  if(n>=total) s+=`<circle cx="${P.sx(fv(R))}" cy="${P.sy(0)}" r="16" fill="none" stroke="${css("--root")}" stroke-width="3"/>`+P.pt(fv(R),0,css("--root"),`(${ft(R)} ; 0)`,{dy:30,dx:f.a>0?14:-14,anchor:f.a>0?"start":"end"});
+  $("rzG").innerHTML=s;
+}
+$("rzNext").onclick=()=>{RZ.step++;drawRz();}; $("rzReset").onclick=()=>{RZ.step=0;drawRz();};
+DRAW.raiz=drawRz;
+
+/* =====================================================================
+   6 · ¿CUÁNTOS PUNTOS?
+===================================================================== */
+const DS={pts:[],ang:0,raf:null,fast:0};
+const dsP=Plane($("dsG"),{x0:-6.5,x1:6.5,y0:-6.5,y1:6.5,W:560});
+const FAST=[["(0 ; 3)","La ordenada al origen es 3: la recta corta al eje y en (0 ; 3)."],["(1 ; 5)","Otro punto: x = 1 → 2 · 1 + 3 = 5. También se ve con la pendiente: desde (0 ; 3) avanzo 1 y subo 2."],["Unimos","Con dos puntos ya queda la recta."]];
+function drawDs(){
+  const P=dsP; let s=P.base(), col=css("--rect");
+  if(DS.pts.length===1){ const [px,py]=DS.pts[0];
+    for(let k=0;k<6;k++){ const t=DS.ang+k*Math.PI/6, dx=Math.cos(t)*20, dy=Math.sin(t)*20; s+=P.seg(px-dx,py-dy,px+dx,py+dy,css("--grid2"),2); }
+    const t=DS.ang*1.7, dx=Math.cos(t)*20, dy=Math.sin(t)*20; s+=P.seg(px-dx,py-dy,px+dx,py+dy,col,3.5); }
+  if(DS.pts.length===2){ const [[a,b],[c,d]]=DS.pts; const dx=c-a, dy=d-b, L=Math.hypot(dx,dy)||1, k=30/L; s+=P.seg(a-dx*k,b-dy*k,a+dx*k,b+dy*k,col,4); }
+  if(DS.fast){ if(DS.fast>=3) s+=P.line(2,3,css("--ok"),4);
+    s+=P.pt(0,3,css("--cb"),"(0 ; 3)",{dx:-12,anchor:"end"});
+    if(DS.fast>=2){ s+=P.seg(0,3,1,3,css("--ca"),3,'stroke-dasharray="6 5"')+P.seg(1,3,1,5,css("--ca"),3,'stroke-dasharray="6 5"')+P.pt(1,5,css("--ok"),"(1 ; 5)",{dx:12}); } }
+  DS.pts.forEach(([x,y],i)=>s+=P.pt(x,y,css("--ca"),"P"+(i+1),{r:9}));
+  $("dsG").innerHTML=s;
+  $("dsInfo").innerHTML=DS.pts.length===0?`<div class="box"><p class="muted">Marcá un punto.</p></div>`
+    :DS.pts.length===1?`<div class="box hl" style="--c:var(--ord)"><h3>Con 1 punto…</h3><p>Por un punto pasan <b>infinitas rectas</b>: la recta puede girar para cualquier lado. Con un punto no alcanza. Marcá otro.</p></div>`
+    :`<div class="box hl" style="--c:var(--ok)"><h3>Con 2 puntos: una sola recta</h3><p>Por dos puntos pasa <b>una única recta</b>. Para dibujar una función lineal alcanza con <b>dos puntos</b>.</p></div>`;
+  $("dsSteps").innerHTML=FAST.slice(0,DS.fast).map((f,i)=>`<div class="step ${i===DS.fast-1?"new":""}"><div class="e">${f[0]}</div><div class="nt">${f[1]}</div></div>`).join("");
+  $("dsFast").textContent=DS.fast>=3?"Ver de nuevo":"Siguiente paso";
+}
+function spin(){ if(DS.raf) return; const loop=()=>{ if(cur!=="dos"||DS.pts.length!==1){DS.raf=null;return;} DS.ang+=0.012; drawDs(); DS.raf=requestAnimationFrame(loop); }; if(!reduce) DS.raf=requestAnimationFrame(loop); }
+$("dsG").addEventListener("pointerdown",e=>{ let [x,y]=dsP.toLocal(e); x=Math.round(x*2)/2; y=Math.round(y*2)/2;
+  if(DS.pts.length>=2) DS.pts=[]; if(DS.pts.some(p=>p[0]===x&&p[1]===y)) return; DS.pts.push([x,y]); drawDs(); spin(); });
+$("dsReset").onclick=()=>{DS.pts=[];drawDs();};
+$("dsFast").onclick=()=>{ DS.fast=DS.fast>=3?0:DS.fast+1; DS.pts=[]; drawDs(); };
+DRAW.dos=()=>{drawDs();spin();};
+
+/* =====================================================================
+   7 · FORMA EXPLÍCITA
+===================================================================== */
+const fr2=(a,b)=>`<span class="fr"><span>${a}</span><span>${b}</span></span>`;
+const EX=[
+ {t:"2y + 6x = 4",a:-3,b:2,steps:[
+   ["2y + 6x = 4","Forma implícita: no se ve cuál es la pendiente ni la ordenada al origen."],
+   ["2y = 4 − 6x","Paso restando 6x."],
+   [`y = ${fr2("(4 − 6x)","2")}`,"Paso dividiendo el 2 a todo el término de la derecha, encerrado entre paréntesis."],
+   [`y = ${fr2("4","2")} − ${fr2("6x","2")}`,"Distribuyo el 2."],
+   [`y = 2 − 3x`,"Simplifico las fracciones."],
+   [`y = <span class="ca">−3</span>x + <span class="cb">2</span>`,"Ordeno: forma explícita."]]},
+ {t:"−5 + y/2 + 2x = 0",a:-4,b:10,steps:[
+   [`−5 + ${fr2("y","2")} + 2x = 0`,"Forma implícita."],
+   [`${fr2("y","2")} = −2x + 5`,"Paso restando 2x y sumando 5."],
+   [`y = (−2x + 5) · 2`,"Paso multiplicando el 2 a todo el término de la derecha, entre paréntesis."],
+   [`y = <span class="ca">−4</span>x + <span class="cb">10</span>`,"Distribuyo el 2: forma explícita."]]}
+];
+let EXs={e:0,n:1};
+const exP1=Plane($("exG"),{x0:-4.5,x1:4.5,y0:-4.5,y1:11.5,W:480});
+EX.forEach((e,i)=>{const b=document.createElement("button");b.className="sel";b.innerHTML=e.steps[0][0];b.onclick=()=>{EXs={e:i,n:1};drawEx();};$("exSel").appendChild(b);});
+function drawEx(){
+  const e=EX[EXs.e], n=EXs.n, done=n>=e.steps.length;
+  [...$("exSel").children].forEach((b,i)=>b.setAttribute("aria-pressed",i===EXs.e));
+  $("exSteps").innerHTML=e.steps.slice(0,n).map((s,i)=>`<div class="step ${i===n-1?"new":""}"><div class="e">${s[0]}</div><div class="nt">${s[1]}</div></div>`).join("");
+  $("exNext").disabled=done;
+  $("exEnd").innerHTML=done?`<div class="box hl" style="--c:var(--ok)"><h3>Ahora sí se ve todo</h3><p>Pendiente <b class="ca">a = ${m(e.a)}</b> (decreciente) · ordenada al origen <b class="cb">b = ${m(e.b)}</b>, corta al eje y en (0 ; ${m(e.b)}).</p></div>`:"";
+  const P=exP1; let s=P.base();
+  if(done){ s+=P.line(e.a,e.b,css("--rect"),4)+P.pt(0,e.b,css("--cb"),`(0 ; ${m(e.b)})`,{dx:12}); const R=F(-e.b,e.a); s+=P.pt(fv(R),0,css("--root"),`(${ft(R)} ; 0)`,{dy:-14}); }
+  else s+=`<text x="${P.W/2}" y="${P.sy(8)}" text-anchor="middle" font-size="16" font-family="Atkinson Hyperlegible, sans-serif" font-weight="700" fill="${css("--muted")}" paint-order="stroke" stroke="${css("--panel")}" stroke-width="5">En forma implícita todavía no la podemos graficar</text>`;
+  $("exG").innerHTML=s;
+}
+$("exNext").onclick=()=>{EXs.n++;drawEx();}; $("exReset").onclick=()=>{EXs.n=1;drawEx();};
+DRAW.exp=drawEx;
+
+/* =====================================================================
+   8 · PARALELAS Y PERPENDICULARES
+===================================================================== */
+const PV=[[-3,1],[-5,2],[-2,1],[-3,2],[-1,1],[-1,2],[-2,5],[0,1],[2,5],[1,2],[1,1],[3,2],[2,1],[5,2],[3,1]];
+let PP={mode:"par"};
+const ppP=Plane($("ppG"),{x0:-8.5,x1:8.5,y0:-8.5,y1:8.5,W:560});
+function drawPp(){
+  const per=PP.mode==="perp", A1=PV[+$("pa").value], a1=fv(A1);
+  $("pmPar").setAttribute("aria-pressed",!per); $("pmPerp").setAttribute("aria-pressed",per);
+  $("paV").innerHTML=fh(A1);
+  const vert=per&&a1===0;
+  const A2=per?(vert?[0,1]:F(-A1[1],A1[0])):A1, a2=fv(A2), b1=-5, b2=4;
+  const P=ppP; let s=P.base();
+  if(vert){ s+=P.line(0,b1,css("--rect"),4)+P.seg(3,-9,3,9,css("--rect2"),4)+P.pt(0,b1,css("--rect"),"");
+    const k=.7; s+=`<polyline points="${P.sx(3+k)},${P.sy(b1)} ${P.sx(3+k)},${P.sy(b1+k)} ${P.sx(3)},${P.sy(b1+k)}" fill="none" stroke="${css("--ink")}" stroke-width="2.5"/>`+P.pt(3,b1,css("--ink"),"90°",{r:5,dx:14,dy:22});
+    s+=`<text x="${P.sx(3)+10}" y="${P.sy(6)}" font-size="17" font-family="JetBrains Mono, monospace" font-weight="700" fill="${css("--rect2")}" paint-order="stroke" stroke="${css("--panel")}" stroke-width="4">x = 3</text>`;
+    $("ppG").innerHTML=s;
+    $("ppTxt").innerHTML=`<h2>Rectas perpendiculares</h2><p>Con <b>a = 0</b> la primera recta es <b>horizontal</b> (constante). Su perpendicular es una recta <b>vertical</b>.</p>`;
+    $("ppEq").innerHTML=`<p class="big" style="color:var(--rect)">y = −5</p><p class="big" style="color:var(--rect2)">x = 3</p><p>El 0 no tiene inverso, así que no se puede calcular la pendiente de la perpendicular. La recta vertical <b>no es una función</b>: al x = 3 le corresponden infinitos valores de y.</p>`;
+    return; }
+  s+=P.line(a1,b1,css("--rect"),4)+P.line(a2,b2,css("--rect2"),4);
+  s+=P.pt(0,b1,css("--rect"),"")+P.pt(0,b2,css("--rect2"),"");
+  if(per){ const xi=(b2-b1)/(a1-a2), yi=a1*xi+b1;
+    if(Math.abs(xi)<8&&Math.abs(yi)<8){ // marca de ángulo recto
+      const u=[1,a1],un=Math.hypot(...u),v=[1,a2],vn=Math.hypot(...v), k=.7;
+      const p1=[xi+u[0]/un*k,yi+u[1]/un*k], p2=[xi+u[0]/un*k+v[0]/vn*k,yi+u[1]/un*k+v[1]/vn*k], p3=[xi+v[0]/vn*k,yi+v[1]/vn*k];
+      s+=`<polyline points="${P.sx(p1[0])},${P.sy(p1[1])} ${P.sx(p2[0])},${P.sy(p2[1])} ${P.sx(p3[0])},${P.sy(p3[1])}" fill="none" stroke="${css("--ink")}" stroke-width="2.5"/>`;
+      s+=P.pt(xi,yi,css("--ink"),"90°",{r:5,dx:14,dy:22}); } }
+  $("ppG").innerHTML=s;
+  $("ppTxt").innerHTML=per?`<h2>Rectas perpendiculares</h2><p>Son perpendiculares cuando sus pendientes son <b>inversas y opuestas</b>: se dan vuelta y cambian de signo. Se cortan formando un ángulo recto.</p>`
+    :`<h2>Rectas paralelas</h2><p>Son paralelas cuando tienen <b>la misma pendiente</b>. Por más que se alarguen, nunca se cortan.</p>`;
+  $("ppEq").innerHTML=`<p class="big" style="color:var(--rect)">${eqH(A1,F(b1),{color:false})}</p><p class="big" style="color:var(--rect2)">${eqH(A2,F(b2),{color:false})}</p>
+    <p>${per?`Pendientes: <b>${fh(A1)}</b> y <b>${fh(A2)}</b>. ${fh(A2)} es el opuesto del inverso de ${fh(A1)}.`:`Las dos tienen pendiente <b>${fh(A1)}</b>. Sólo cambia la ordenada al origen.`}</p>`;
+}
+$("pa").oninput=drawPp;
+$("pmPar").onclick=()=>{PP.mode="par";$("pa").value=11;drawPp();}; $("pmPerp").onclick=()=>{PP.mode="perp";$("pa").value=8;drawPp();};
+DRAW.par=drawPp;
+
+/* ---------- inicio y tema ---------- */
+const redraw=()=>DRAW[cur]&&DRAW[cur]();
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",redraw);
+new MutationObserver(redraw).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+go("maq");
+
+/* ---------- lápiz láser (toda la página, se borra a los 5 s) ---------- */
+const ink=$("ink"), ictx=ink.getContext("2d"), penBtn=$("pen");
+const HOLD=4000, FADE=1000;
+let strokes=[], curS=null, raf=null;
+function sizeInk(){ const d=devicePixelRatio||1; ink.width=Math.round(innerWidth*d); ink.height=Math.round(innerHeight*d); ictx.setTransform(d,0,0,d,0,0); }
+addEventListener("resize",sizeInk); sizeInk();
+penBtn.onclick=()=>{ const on=penBtn.getAttribute("aria-pressed")!=="true"; penBtn.setAttribute("aria-pressed",on); document.body.classList.toggle("drawing",on); };
+const pos=e=>[e.clientX+scrollX,e.clientY+scrollY];
+ink.addEventListener("pointerdown",e=>{ e.preventDefault();
+  const r=penBtn.getBoundingClientRect(); if(e.clientX>=r.left-8&&e.clientX<=r.right+8&&e.clientY>=r.top-8&&e.clientY<=r.bottom+8){ penBtn.click(); return; }
+  ink.setPointerCapture(e.pointerId); curS={pts:[pos(e)],end:null}; strokes.push(curS); loop(); });
+ink.addEventListener("pointermove",e=>{ if(!curS) return; for(const c of (e.getCoalescedEvents?e.getCoalescedEvents():[e])) curS.pts.push(pos(c)); });
+const endS=()=>{ if(curS){ curS.end=performance.now(); curS=null; } };
+ink.addEventListener("pointerup",endS); ink.addEventListener("pointercancel",endS);
+function loop(){ if(raf) return; const tick=()=>{
+  const now=performance.now(), col=css("--fucsia");
+  ictx.clearRect(0,0,ink.width,ink.height); ictx.save(); ictx.translate(-scrollX,-scrollY);
+  strokes=strokes.filter(s=>s.end===null||now-s.end<HOLD+FADE);
+  for(const s of strokes){ const age=s.end===null?0:now-s.end; ictx.globalAlpha=Math.max(0,age<HOLD?1:1-(age-HOLD)/FADE);
+    ictx.lineCap="round"; ictx.lineJoin="round"; ictx.beginPath(); s.pts.forEach(([x,y],i)=>i?ictx.lineTo(x,y):ictx.moveTo(x,y));
+    if(s.pts.length===1) ictx.arc(s.pts[0][0],s.pts[0][1],1.5,0,7);
+    ictx.strokeStyle=col; ictx.shadowColor=col; ictx.shadowBlur=18; ictx.lineWidth=9; ictx.stroke();
+    ictx.shadowBlur=6; ictx.lineWidth=6; ictx.stroke();
+    ictx.shadowColor="#fff"; ictx.shadowBlur=4; ictx.strokeStyle="#fff"; ictx.lineWidth=2.2; ictx.stroke(); }
+  ictx.restore(); ictx.globalAlpha=1; ictx.shadowBlur=0;
+  raf=strokes.length?requestAnimationFrame(tick):null; }; raf=requestAnimationFrame(tick); }
+})();
+</script>
+
+</body>
+</html>
