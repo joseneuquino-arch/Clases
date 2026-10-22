@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<title>¿Es función? Flechas y conjuntos</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: encabezado · pestañas de ejemplos · pizarra táctil (dos conjuntos) · panel de veredicto con las dos condiciones */
+:root{
+  --bg:#f1efe8; --panel:#fffdf8; --ink:#1d2433; --muted:#636b7a; --line:#d6d2c6;
+  --setA:#3b6fd8; --setA-fill:rgba(59,111,216,.08); --setB:#d0812a; --setB-fill:rgba(208,129,42,.09);
+  --arrow:#1d2433; --ok:#1e9a57; --bad:#d23b3b; --sel:#7b45d6; --bad-fill:rgba(210,59,59,.12);
+  --f-disp:"Bricolage Grotesque",system-ui,sans-serif; --f-body:"Atkinson Hyperlegible",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#13161d; --panel:#1b1f29; --ink:#e8eaf0; --muted:#9aa1b0; --line:#2f3545;
+  --setA:#78a2ff; --setA-fill:rgba(120,162,255,.10); --setB:#f0a65a; --setB-fill:rgba(240,166,90,.10);
+  --arrow:#e8eaf0; --ok:#46cf84; --bad:#ff6d6d; --sel:#b48cff; --bad-fill:rgba(255,109,109,.16); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#13161d; --panel:#1b1f29; --ink:#e8eaf0; --muted:#9aa1b0; --line:#2f3545;
+  --setA:#78a2ff; --setA-fill:rgba(120,162,255,.10); --setB:#f0a65a; --setB-fill:rgba(240,166,90,.10);
+  --arrow:#e8eaf0; --ok:#46cf84; --bad:#ff6d6d; --sel:#b48cff; --bad-fill:rgba(255,109,109,.16); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 90px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+h1{font-family:var(--f-disp);font-weight:800;font-size:clamp(1.6rem,4vw,2.4rem);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.def{margin:.3rem 0 0;max-width:70ch;color:var(--muted)}
+.def b{color:var(--ink)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tab{font:700 .95rem var(--f-body);border:2px solid var(--line);background:var(--panel);color:var(--ink);padding:.5rem .9rem;border-radius:999px;cursor:pointer}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible{outline:3px solid var(--sel);outline-offset:2px}
+.board{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.q{padding:14px 16px 0;display:flex;flex-direction:column;gap:2px}
+.q h2{font-family:var(--f-disp);font-weight:600;font-size:1.3rem;margin:0}
+.q p{margin:0;color:var(--muted)}
+.ficha{margin-top:6px;font-size:.95rem;color:var(--muted)}
+.ficha b{color:var(--ink)}
+svg{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+.node rect{transition:fill .2s,stroke .2s}
+.node text{font-family:var(--f-body);font-weight:700;pointer-events:none}
+.node.mono text{font-family:var(--f-mono);font-weight:500}
+.stagewrap{position:relative}
+.toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);max-width:calc(100% - 32px);background:var(--bad);color:#fff;font-weight:700;padding:.6rem 1rem;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.18);text-align:center;font-size:1.05rem}
+.toast.shake{animation:shake .45s}
+@keyframes shake{0%,100%{transform:translateX(-50%)}20%{transform:translateX(calc(-50% - 10px))}40%{transform:translateX(calc(-50% + 10px))}60%{transform:translateX(calc(-50% - 6px))}80%{transform:translateX(calc(-50% + 6px))}}
+@media (prefers-reduced-motion:reduce){.toast.shake{animation:none}}
+.controls{display:flex;flex-wrap:wrap;gap:10px;padding:12px 14px;border-top:1px solid var(--line);align-items:center}
+.btn{font:700 1rem var(--f-body);border:0;border-radius:10px;padding:.6rem 1rem;cursor:pointer;background:var(--ink);color:var(--bg)}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.hint{color:var(--muted);font-size:.9rem;flex:1 1 220px;min-width:0}
+.verdict{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:720px){.verdict{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
+.card h3{font-family:var(--f-disp);font-weight:600;margin:0 0 .5rem;font-size:1.15rem}
+.cond{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px dashed var(--line)}
+.cond:first-of-type{border-top:0}
+.mark{flex:0 0 1.9rem;height:1.9rem;border-radius:50%;display:grid;place-items:center;font-weight:800;border:2px solid var(--line);color:var(--muted)}
+.mark.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.mark.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+.cond div{min-width:0}
+.cond small{display:block;color:var(--muted)}
+.big{font-family:var(--f-disp);font-weight:800;font-size:1.6rem;margin:.2rem 0 .4rem}
+.big.ok{color:var(--ok)} .big.bad{color:var(--bad)}
+.sets{font-family:var(--f-mono);font-size:.95rem;line-height:1.7;overflow-x:auto}
+.sets .k{font-family:var(--f-body);font-weight:700}
+.why{margin:.4rem 0 0;max-width:62ch}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Funciones · Concepto</span>
+    <h1>¿Es función?</h1>
+    <p class="def">Una relación de A en B es <b>función</b> si a <b>cada</b> elemento de A le corresponde <b>uno y solo un</b> elemento de B.</p>
+  </header>
+
+  <div class="tabs" role="group" aria-label="Ejemplos" id="tabs"></div>
+
+  <div class="board">
+    <div class="q">
+      <span class="eyebrow" id="qlabel"></span>
+      <h2 id="qtitle"></h2>
+      <p id="qtext"></p>
+      <div class="ficha" id="ficha"></div>
+    </div>
+    <div class="stagewrap">
+      <svg id="svg" viewBox="0 0 900 520" aria-label="Diagrama de flechas entre dos conjuntos"></svg>
+      <div class="toast" id="toast" role="status" hidden></div>
+    </div>
+    <div class="controls">
+      <button class="btn" id="check">¿Es función?</button>
+      <button class="btn ghost" id="real">Mostrar la relación</button>
+      <button class="btn ghost" id="undo">↶ Deshacer</button>
+      <button class="btn ghost" id="clear">Borrar flechas</button>
+      <span class="hint">Arrastrá con el dedo desde un elemento de A hasta uno de B (o tocá uno y después el otro). Tocá una flecha para borrarla.</span>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <div class="card">
+      <h3>Las dos condiciones</h3>
+      <div class="cond"><span class="mark" id="m1">?</span><div><b>Existencia</b><small>Todos los elementos de A tienen al menos una flecha.</small></div></div>
+      <div class="cond"><span class="mark" id="m2">?</span><div><b>Unicidad</b><small>De ningún elemento de A salen dos flechas o más.</small></div></div>
+    </div>
+    <div class="card" id="out">
+      <h3>Resultado</h3>
+      <p style="color:var(--muted);margin:0">Uní los elementos y tocá <b>¿Es función?</b></p>
+    </div>
+  </div>
+</div>
+
+<script>
+(()=>{
+const EJ=[
+ {id:"dni",tab:"A · Persona → DNI",label:"Ejemplo A",titulo:"A cada persona, su DNI",
+  texto:"A = personas del grupo, B = números de DNI.",ficha:"Cada persona tiene <b>un único</b> DNI. Uno de los DNI es de alguien que no está en el grupo.",
+  A:["Ana","Bruno","Carla","Diego"],B:["45.123.789","46.987.321","44.555.012","47.210.654","43.888.105"],mono:true,
+  real:[[0,0],[1,1],[2,2],[3,3]], unico:n=>`${n} ya tiene DNI. Una persona no puede tener dos DNI.`,
+  porque:"Cada persona tiene un solo DNI. Fijate que el DNI 43.888.105 no recibe ninguna flecha: eso está permitido. El codominio es todo B, pero la imagen son sólo los elementos a los que llega alguna flecha."},
+ {id:"ig",tab:"B · Persona → Cuenta de Instagram",label:"Ejemplo B",titulo:"A cada persona, su cuenta de Instagram",
+  texto:"A = personas del grupo, B = cuentas de Instagram.",ficha:"<b>Bruno tiene dos cuentas</b>: una personal y otra donde sube fotos de fútbol.",
+  A:["Ana","Bruno","Carla","Diego"],B:["@ana.ruiz","@bruno_m","@bruno.futbol","@carli.art","@diego_nqn"],mono:true,
+  real:[[0,0],[1,1],[1,2],[2,3],[3,4]],
+  porque:"De Bruno salen dos flechas: le corresponden dos cuentas. Falla la unicidad, entonces la relación no es función. Con el DNI esto no podía pasar: nadie tiene dos DNI."},
+ {id:"auto",tab:"C · Familiar → Auto que maneja",label:"Ejemplo C",titulo:"A cada integrante de la familia, la patente del auto que maneja",
+  texto:"A = integrantes de la familia, B = patentes de los autos de la casa.",ficha:"<b>Lucía tiene 8 años</b>: no maneja ningún auto.",
+  A:["Papá","Mamá","Abuela","Lucía (8 años)"],B:["AE 123 KD","AF 908 LM","OPQ 452"],mono:true,
+  real:[[0,0],[1,1],[2,2]],
+  porque:"Lucía no tiene flecha: no le corresponde ninguna patente. Falla la existencia, entonces la relación no es función. Para que fuera función, A tendría que tener sólo a los que manejan."},
+ {id:"san",tab:"D · Alumno → Grupo sanguíneo",label:"Ejemplo D",titulo:"A cada alumno, su grupo sanguíneo",
+  texto:"A = alumnos, B = grupos sanguíneos.",ficha:"<b>Sofi y Mateo son los dos del grupo 0.</b> Nadie del grupo es AB.",
+  A:["Sofi","Mateo","Valen","Juli","Tomi"],B:["A","B","AB","0"],mono:false,
+  real:[[0,3],[1,3],[2,0],[3,1],[4,0]], unico:n=>`${n} ya tiene grupo sanguíneo. Nadie tiene dos.`,
+  porque:"Que dos flechas lleguen al mismo elemento de B no es problema: lo que importa es que de cada alumno salga una sola. Y AB no recibe flechas, por eso la imagen es más chica que el codominio."}
+];
+
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const svg=document.getElementById("svg"), NS="http://www.w3.org/2000/svg";
+const $=id=>document.getElementById(id);
+let ej=EJ[0], arrows=[], history=[], sel=null, checked=false, flagged=new Set(), anim=null;
+let L={}; // layout
+
+// ---------- pestañas ----------
+EJ.forEach((e,i)=>{const b=document.createElement("button");b.className="tab";b.textContent=e.tab;b.setAttribute("aria-pressed",i===0);b.onclick=()=>load(i);$("tabs").appendChild(b);});
+function load(i){
+  flash=null; $("toast").hidden=true;
+  ej=EJ[i]; arrows=[]; history=[]; sel=null; checked=false; flagged.clear(); if(anim){clearTimeout(anim);anim=null;}
+  [...$("tabs").children].forEach((b,j)=>b.setAttribute("aria-pressed",i===j));
+  $("qlabel").textContent=ej.label; $("qtitle").textContent=ej.titulo; $("qtext").textContent=ej.texto; $("ficha").innerHTML=ej.ficha;
+  resetVerdict(); layout(); render();
+}
+
+// ---------- layout (horizontal en pantallas anchas, vertical en celular) ----------
+function layout(){
+  const w=svg.getBoundingClientRect().width||900, portrait=w<600;
+  const nA=ej.A.length,nB=ej.B.length;
+  if(!portrait){
+    const W=900,H=Math.max(440,110+Math.max(nA,nB)*78);
+    const cy=H/2+10, span=Math.max(nA,nB)*78;
+    L={W,H,portrait,
+      eA:{cx:230,cy,rx:165,ry:span/2+60}, eB:{cx:670,cy,rx:165,ry:span/2+60},
+      nw:ej.mono?200:170, nh:52, fs:ej.mono?19:21,
+      pA:ej.A.map((_,i)=>({x:230,y:cy-(nA-1)*39+i*78})),
+      pB:ej.B.map((_,i)=>({x:670,y:cy-(nB-1)*39+i*78}))};
+  }else{
+    const W=420; const rowsA=Math.ceil(nA/2), rowsB=Math.ceil(nB/2);
+    const hA=rowsA*64+70, hB=rowsB*64+70, gap=120, H=40+hA+gap+hB+20;
+    const cyA=40+hA/2, cyB=40+hA+gap+hB/2;
+    const grid=(n,cy,rows)=>Array.from({length:n},(_,i)=>{const r=Math.floor(i/2),c=i%2,last=(i===n-1&&n%2===1);return{x:last?210:(c?310:110),y:cy-(rows-1)*32+r*64};});
+    L={W,H,portrait,eA:{cx:210,cy:cyA,rx:200,ry:hA/2},eB:{cx:210,cy:cyB,rx:200,ry:hB/2},
+      nw:ej.mono?172:150,nh:48,fs:ej.mono?16:19,pA:grid(nA,cyA,rowsA),pB:grid(nB,cyB,rowsB)};
+  }
+  svg.setAttribute("viewBox",`0 0 ${L.W} ${L.H}`);
+}
+
+// ---------- dibujo ----------
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);(parent||svg).appendChild(e);return e;}
+function edge(p,q,fromA){ // punto en el borde del rectángulo p apuntando hacia q
+  const dx=q.x-p.x,dy=q.y-p.y,hw=L.nw/2+(fromA?2:8),hh=L.nh/2+(fromA?2:8);
+  const s=Math.min(hw/Math.abs(dx||1e-6),hh/Math.abs(dy||1e-6));return{x:p.x+dx*s,y:p.y+dy*s};}
+function arrowPath(a,b,color,width,id){
+  const p=L.pA[a],q=L.pB[b],s=edge(p,q,true),t=edge(q,p,false);
+  const mx=(s.x+t.x)/2,my=(s.y+t.y)/2,dx=t.x-s.x,dy=t.y-s.y,len=Math.hypot(dx,dy);
+  const bend=L.portrait?0.12:0.10, cx=mx-dy*bend, cy=my+dx*bend;
+  const g=el("g",{class:"arrow",style:"cursor:pointer"});
+  const d=`M${s.x},${s.y} Q${cx},${cy} ${t.x},${t.y}`;
+  el("path",{d,stroke:"transparent","stroke-width":26,fill:"none"},g);
+  el("path",{d,stroke:color,"stroke-width":width,fill:"none","stroke-linecap":"round"},g);
+  const ax=t.x-cx,ay=t.y-cy,al=Math.hypot(ax,ay),ux=ax/al,uy=ay/al,h=16,w=8;
+  el("polygon",{points:`${t.x},${t.y} ${t.x-ux*h-uy*w},${t.y-uy*h+ux*w} ${t.x-ux*h+uy*w},${t.y-uy*h-ux*w}`,fill:color},g);
+  if(id!==undefined){g.dataset.idx=id;g.setAttribute("role","button");g.setAttribute("aria-label",`Borrar flecha ${ej.A[a]} a ${ej.B[b]}`);}
+  return g;
+}
+function render(){
+  svg.innerHTML="";
+  const {eA,eB}=L;
+  el("ellipse",{cx:eA.cx,cy:eA.cy,rx:eA.rx,ry:eA.ry,fill:css("--setA-fill"),stroke:css("--setA"),"stroke-width":3});
+  el("ellipse",{cx:eB.cx,cy:eB.cy,rx:eB.rx,ry:eB.ry,fill:css("--setB-fill"),stroke:css("--setB"),"stroke-width":3});
+  const lab=(x,y,t,c,anchor)=>{const e=el("text",{x,y,fill:c,"font-family":"Bricolage Grotesque, sans-serif","font-weight":800,"font-size":L.portrait?30:34,"text-anchor":anchor});e.textContent=t;};
+  if(L.portrait){lab(18,eA.cy-eA.ry+26,"A",css("--setA"),"start");lab(18,eB.cy-eB.ry+26,"B",css("--setB"),"start");}
+  else{lab(eA.cx-eA.rx-6,eA.cy-eA.ry+30,"A",css("--setA"),"start");lab(eB.cx+eB.rx+6,eB.cy-eB.ry+30,"B",css("--setB"),"end");}
+  // imagen resaltada
+  const imgSet=new Set(arrows.map(a=>a[1]));
+  // flechas
+  const counts=ej.A.map((_,i)=>arrows.filter(a=>a[0]===i).length);
+  arrows.forEach(([a,b],i)=>{
+    const bad=checked&&counts[a]>1;
+    arrowPath(a,b,bad?css("--bad"):css("--arrow"),bad?4:3,i);
+  });
+  if(flash){ const g=arrowPath(flash.a,flash.b,css("--bad"),3); g.setAttribute("stroke-dasharray","6 6"); g.style.opacity=.75; g.querySelectorAll("path")[1].setAttribute("stroke-dasharray","7 7");
+    const p=L.pA[flash.a],q=L.pB[flash.b]; const x=(p.x+q.x)/2,y=(p.y+q.y)/2;
+    el("circle",{cx:x,cy:y,r:17,fill:css("--bad")}); const tx=el("text",{x,y:y+7,"text-anchor":"middle","font-size":22,"font-weight":800,fill:"#fff"}); tx.textContent="✕"; }
+  // nodos
+  const node=(p,txt,side,i)=>{
+    const g=el("g",{class:"node"+(ej.mono&&side==="B"?" mono":""),"data-side":side,"data-i":i,style:"cursor:pointer",tabindex:0,role:"button","aria-label":txt});
+    let stroke=side==="A"?css("--setA"):css("--setB"), fill=css("--panel"), sw=2.5;
+    if(side==="A"&&sel===i){stroke=css("--sel");sw=4;}
+    if(flash&&((side==="A"&&flash.a===i)||(side==="B"&&flash.b===i))){stroke=css("--bad");sw=5;fill=css("--bad-fill");}
+    if(checked&&side==="A"){ if(counts[i]===0){stroke=css("--bad");sw=4;} else if(counts[i]>1){stroke=css("--bad");sw=4;} else {stroke=css("--ok");sw=3.5;} }
+    if(checked&&side==="B"&&imgSet.has(i)){fill=css("--setB-fill");stroke=css("--setB");sw=4;}
+    el("rect",{x:p.x-L.nw/2,y:p.y-L.nh/2,width:L.nw,height:L.nh,rx:L.nh/2,fill,stroke,"stroke-width":sw},g);
+    const t=el("text",{x:p.x,y:p.y+L.fs*0.36,"text-anchor":"middle","font-size":L.fs,fill:css("--ink")},g);t.textContent=txt;
+    if(checked&&side==="A"&&counts[i]!==1){
+      const bx=L.portrait?p.x+L.nw/2-6:p.x-L.nw/2-4, by=p.y-L.nh/2;
+      el("circle",{cx:bx,cy:by,r:13,fill:css("--bad")},g);
+      const c=el("text",{x:bx,y:by+5,"text-anchor":"middle","font-size":14,fill:"#fff"},g);c.textContent=counts[i]===0?"0":counts[i];
+    }
+  };
+  ej.A.forEach((t,i)=>node(L.pA[i],t,"A",i));
+  ej.B.forEach((t,i)=>node(L.pB[i],t,"B",i));
+  if(checked) verdict();
+}
+
+// ---------- interacción táctil ----------
+let drag=null;
+function toSvg(e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse());}
+function hitNode(e){const t=document.elementFromPoint(e.clientX,e.clientY);const g=t&&t.closest(".node");return g?{side:g.dataset.side,i:+g.dataset.i}:null;}
+svg.addEventListener("pointerdown",e=>{
+  const ar=e.target.closest(".arrow");
+  if(ar&&ar.dataset.idx!==undefined){ save(); arrows.splice(+ar.dataset.idx,1); afterChange(); return; }
+  const h=hitNode(e); if(!h) {sel=null;render();return;}
+  if(h.side==="A"){ drag={a:h.i,start:toSvg(e),moved:false,line:null}; svg.setPointerCapture(e.pointerId); }
+  else if(h.side==="B"&&sel!==null){ addArrow(sel,h.i); sel=null; }
+});
+svg.addEventListener("pointermove",e=>{
+  if(!drag)return; const p=toSvg(e);
+  if(!drag.moved&&Math.hypot(p.x-drag.start.x,p.y-drag.start.y)>8){drag.moved=true;}
+  if(drag.moved){
+    if(!drag.line) drag.line=el("line",{stroke:css("--sel"),"stroke-width":4,"stroke-dasharray":"8 6","stroke-linecap":"round","pointer-events":"none"});
+    const s=L.pA[drag.a]; drag.line.setAttribute("x1",s.x);drag.line.setAttribute("y1",s.y);drag.line.setAttribute("x2",p.x);drag.line.setAttribute("y2",p.y);
+  }
+});
+svg.addEventListener("pointerup",e=>{
+  if(!drag)return; const d=drag; drag=null;
+  if(d.line) d.line.remove();
+  if(!d.moved){ sel=(sel===d.a)?null:d.a; render(); return; }
+  const h=hitNode(e); if(h&&h.side==="B") addArrow(d.a,h.i); else render();
+});
+svg.addEventListener("keydown",e=>{ if(e.key!=="Enter"&&e.key!==" ")return; const g=e.target.closest(".node"); if(!g)return; e.preventDefault();
+  const side=g.dataset.side,i=+g.dataset.i; if(side==="A"){sel=sel===i?null:i;render();} else if(sel!==null){addArrow(sel,i);sel=null;} });
+let flash=null, toastT=null;
+function rechazar(a,b){
+  flash={a,b}; render();
+  const t=$("toast"); t.textContent="✋ "+ej.unico(ej.A[a]); t.hidden=false;
+  t.classList.remove("shake"); void t.offsetWidth; t.classList.add("shake");
+  clearTimeout(toastT); toastT=setTimeout(()=>{flash=null;t.hidden=true;render();},2200);
+}
+function addArrow(a,b){ if(arrows.some(x=>x[0]===a&&x[1]===b)){render();return;}
+  if(ej.unico && arrows.some(x=>x[0]===a)){ rechazar(a,b); return; }
+  save(); arrows.push([a,b]); afterChange(); }
+function save(){ history.push(arrows.map(x=>x.slice())); }
+function afterChange(){ render(); }
+
+// ---------- veredicto ----------
+function resetVerdict(){ $("m1").className="mark";$("m1").textContent="?";$("m2").className="mark";$("m2").textContent="?";
+  $("out").innerHTML='<h3>Resultado</h3><p style="color:var(--muted);margin:0">Uní los elementos y tocá <b>¿Es función?</b></p>'; }
+function verdict(){
+  const counts=ej.A.map((_,i)=>arrows.filter(a=>a[0]===i).length);
+  const sin=ej.A.filter((_,i)=>counts[i]===0), mas=ej.A.filter((_,i)=>counts[i]>1);
+  const ex=sin.length===0, un=mas.length===0, es=ex&&un;
+  $("m1").className="mark "+(ex?"ok":"bad");$("m1").textContent=ex?"✓":"✗";
+  $("m2").className="mark "+(un?"ok":"bad");$("m2").textContent=un?"✓":"✗";
+  const fin=arrows.length>0 && ej.real.length===arrows.length && ej.real.every(r=>arrows.some(a=>a[0]===r[0]&&a[1]===r[1]));
+  let h=`<h3>Resultado</h3><div class="big ${es?"ok":"bad"}">${es?"Sí es función":"No es función"}</div>`;
+  if(!ex) h+=`<p class="why"><b>${sin.join(", ")}</b> no ${sin.length>1?"tienen":"tiene"} ningún elemento asignado en B.</p>`;
+  if(!un) h+=`<p class="why">De <b>${mas.join(", ")}</b> sale${mas.length>1?"n":""} más de una flecha.</p>`;
+  if(es){
+    const im=[...new Set(arrows.map(a=>a[1]))].sort((x,y)=>x-y).map(i=>ej.B[i]);
+    h+=`<div class="sets"><div><span class="k">Dominio = </span>{ ${ej.A.join(" ; ")} }</div><div><span class="k">Codominio = </span>{ ${ej.B.join(" ; ")} }</div><div><span class="k">Imagen = </span>{ ${im.join(" ; ")} }</div></div>`;
+  }
+  if(fin) h+=`<p class="why" style="color:var(--muted)">${ej.porque}</p>`;
+  $("out").innerHTML=h;
+}
+$("check").onclick=()=>{ checked=true; sel=null; render(); $("out").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"nearest"}); };
+$("undo").onclick=()=>{ if(!history.length)return; arrows=history.pop(); render(); };
+$("clear").onclick=()=>{ if(anim){clearTimeout(anim);anim=null;} save(); arrows=[]; checked=false; resetVerdict(); render(); };
+$("real").onclick=()=>{
+  if(anim){clearTimeout(anim);anim=null;}
+  save(); arrows=[]; checked=false; resetVerdict(); render();
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches; let k=0;
+  const step=()=>{ if(k>=ej.real.length){anim=null;return;} arrows.push(ej.real[k++].slice()); render(); anim=setTimeout(step,reduce?0:650); };
+  step();
+};
+
+// re-armado si cambia el ancho o el tema
+let lastPortrait=null;
+new ResizeObserver(()=>{const w=svg.getBoundingClientRect().width;const p=w<600;if(p!==lastPortrait){lastPortrait=p;layout();render();}}).observe(svg);
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",render);
+new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+load(0);
+})();
+</script>
+
+<!-- lápiz láser: toda la página, el trazo se borra a los 5 s -->
+<style>
+#lzInk{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;touch-action:none;z-index:50}
+body.lz-drawing #lzInk{pointer-events:auto;cursor:crosshair}
+#lzPen{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:max(16px,env(safe-area-inset-right,0px));z-index:51;display:flex;align-items:center;gap:6px;
+  font:700 1.05rem "Atkinson Hyperlegible",system-ui,sans-serif;border:2px solid rgba(128,128,128,.4);background:var(--panel,#fff);color:var(--ink,#18213a);border-radius:999px;padding:.65rem 1.1rem;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+#lzPen[aria-pressed="true"]{background:#e5007e;border-color:#e5007e;color:#fff}
+#lzPen:focus-visible{outline:3px solid #e5007e;outline-offset:2px}
+</style>
+<canvas id="lzInk" aria-hidden="true"></canvas>
+<button id="lzPen" aria-pressed="false" aria-label="Lápiz láser" title="Lápiz láser: el trazo se borra solo">
+  <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 20l1.2-4.6L15.6 5a2 2 0 0 1 2.8 0l.6.6a2 2 0 0 1 0 2.8L8.6 18.8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M13.5 7l3.5 3.5" stroke="currentColor" stroke-width="2"/></svg>
+  <span>Lápiz</span>
+</button>
+<script>
+(()=>{
+const ink=document.getElementById("lzInk"), ctx=ink.getContext("2d"), pen=document.getElementById("lzPen");
+document.body.appendChild(ink); document.body.appendChild(pen);
+const HOLD=4000, FADE=1000, COL="#ff1f9a";
+let strokes=[], cur=null, raf=null;
+function size(){ const d=devicePixelRatio||1; ink.width=Math.round(innerWidth*d); ink.height=Math.round(innerHeight*d); ctx.setTransform(d,0,0,d,0,0); }
+addEventListener("resize",size); size();
+pen.onclick=()=>{ const on=pen.getAttribute("aria-pressed")!=="true"; pen.setAttribute("aria-pressed",on); document.body.classList.toggle("lz-drawing",on); };
+const pos=e=>[e.clientX+scrollX,e.clientY+scrollY];
+ink.addEventListener("pointerdown",e=>{ e.preventDefault();
+  const r=pen.getBoundingClientRect(); if(e.clientX>=r.left-8&&e.clientX<=r.right+8&&e.clientY>=r.top-8&&e.clientY<=r.bottom+8){ pen.click(); return; }
+  ink.setPointerCapture(e.pointerId); cur={pts:[pos(e)],end:null}; strokes.push(cur); loop(); });
+ink.addEventListener("pointermove",e=>{ if(!cur) return; for(const c of (e.getCoalescedEvents?e.getCoalescedEvents():[e])) cur.pts.push(pos(c)); });
+const end=()=>{ if(cur){ cur.end=performance.now(); cur=null; } };
+ink.addEventListener("pointerup",end); ink.addEventListener("pointercancel",end);
+function loop(){ if(raf) return; const tick=()=>{
+  const now=performance.now();
+  ctx.clearRect(0,0,ink.width,ink.height); ctx.save(); ctx.translate(-scrollX,-scrollY);
+  strokes=strokes.filter(s=>s.end===null||now-s.end<HOLD+FADE);
+  for(const s of strokes){ const age=s.end===null?0:now-s.end; ctx.globalAlpha=Math.max(0,age<HOLD?1:1-(age-HOLD)/FADE);
+    ctx.lineCap="round"; ctx.lineJoin="round"; ctx.beginPath(); s.pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+    if(s.pts.length===1) ctx.arc(s.pts[0][0],s.pts[0][1],1.5,0,7);
+    ctx.strokeStyle=COL; ctx.shadowColor=COL; ctx.shadowBlur=18; ctx.lineWidth=9; ctx.stroke();
+    ctx.shadowBlur=6; ctx.lineWidth=6; ctx.stroke();
+    ctx.shadowColor="#fff"; ctx.shadowBlur=4; ctx.strokeStyle="#fff"; ctx.lineWidth=2.2; ctx.stroke(); }
+  ctx.restore(); ctx.globalAlpha=1; ctx.shadowBlur=0;
+  raf=strokes.length?requestAnimationFrame(tick):null; }; raf=requestAnimationFrame(tick); }
+})();
+</script>
+
+</body>
+</html>
